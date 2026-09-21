@@ -1,0 +1,211 @@
+/* 
+  Localizable.strings (Vietnamese)
+  Clipback
+*/
+
+/* Navigation & Filters */
+"filter.all" = "Tất cả";
+"filter.text" = "Văn bản";
+"filter.image" = "Hình ảnh";
+"filter.color" = "Màu sắc";
+"filter.link" = "Liên kết";
+"filter.pinned" = "Đã ghim";
+
+/* Search & HUD */
+"search.placeholder" = "Tìm kiếm lịch sử clipboard (hỗ trợ cả chữ trong ảnh)...";
+"search.noResults" = "Không tìm thấy kết quả";
+"search.selectItemPreview" = "Chọn một mục để xem trước";
+"search.itemsCount.singular" = "1 mục";
+"search.itemsCount.plural" = "%d mục";
+"search.settingsTooltip" = "Cài đặt (⌘,)";
+"search.loadingHistory" = "Đang tải lịch sử…";
+"search.emptyPrompt" = "Sao chép nội dung để bắt đầu.";
+
+/* Action Bar */
+"action.paste" = "Dán";
+"action.copy" = "Sao chép";
+"action.pastePlain" = "Văn bản thuần";
+"action.pin" = "Ghim";
+"action.unpin" = "Bỏ ghim";
+"action.delete" = "Xóa";
+
+/* Detail Inspector */
+"detail.textTypeLabel" = "Văn bản";
+"detail.textStats" = "%d ký tự • %d từ";
+"detail.ocrHeader" = "Văn bản nhận diện từ ảnh (OCR)";
+"detail.openInBrowser" = "Mở trong trình duyệt";
+"detail.webLink" = "Liên kết Web";
+"detail.systemFiles" = "Tệp tin hệ thống";
+"detail.qrDetectedHeader" = "Mã QR phát hiện được";
+"detail.qrGenerateTab" = "Mã QR";
+"detail.qrGenerateTip" = "Quét bằng camera điện thoại để mở nhanh liên kết";
+"detail.copyQrImage" = "Sao chép ảnh QR";
+"detail.qrImageCopied" = "Đã chép ảnh QR!";
+"detail.copyQrText" = "Sao chép mã";
+"detail.openQrLink" = "Mở liên kết QR";
+
+/* Settings Window Tabs */
+"settings.title" = "Clipback — Cài đặt";
+"settings.tab.general" = "Chung";
+"settings.tab.hotkeys" = "Phím tắt";
+"settings.tab.filters" = "Bộ lọc";
+"settings.tab.storage" = "Lưu trữ";
+"settings.tab.about" = "Giới thiệu";
+
+/* General Settings */
+"settings.general.language" = "Ngôn ngữ giao diện";
+"settings.general.launchAtLogin" = "Khởi động cùng máy tính";
+"settings.general.showInMenuBar" = "Hiển thị biểu tượng trên Menu Bar";
+"settings.general.menuBarHiddenTip" = "Mẹo: Khi ẩn Menu Bar, bạn luôn có thể mở Cài đặt bằng phím tắt ⌘, khi đang mở Clipback.";
+"settings.general.menuBarIconStyleHeader" = "Kiểu biểu tượng Menu Bar";
+"settings.general.menuBarAdaptiveColor" = "Thích ứng";
+"settings.general.menuBarDarkColor" = "Tối";
+"settings.general.menuBarLightColor" = "Sáng";
+"settings.general.menuBarMonochrome" = "Đơn sắc";
+"settings.general.soundEffects" = "Âm thanh phản hồi khi copy / paste";
+"settings.general.directPaste" = "Tự động dán trực tiếp (Direct Paste)";
+"settings.general.directPasteFooter" = "Khi bật Direct Paste, chọn một mục trong Clipback sẽ tự động dán nội dung vào ứng dụng bạn đang làm việc (yêu cầu quyền Accessibility).";
+"settings.general.hudOpacityHeader" = "Độ trong suốt cửa sổ tìm kiếm";
+"settings.general.hudOpacityAntiGlare" = "Chống chói (Khuyên dùng)";
+"settings.general.hudOpacitySolid" = "Màu đặc (100%)";
+"settings.general.hudOpacityTranslucent" = "Kính mờ vừa (85%)";
+"settings.general.launchAtLoginError" = "Không đổi được tùy chọn mở khi đăng nhập. Kiểm tra Cài đặt hệ thống > Cài đặt chung > Mục đăng nhập.";
+
+/* Hotkeys & Permissions */
+"settings.hotkeys.globalHotkeyHeader" = "Phím tắt toàn cục";
+"settings.hotkeys.globalHotkeyDesc" = "Mở nhanh thanh tìm kiếm lịch sử Clipback từ bất kỳ ứng dụng nào.";
+"settings.hotkeys.toggleShortcutRowTitle" = "Mở / Đóng Clipback";
+"settings.hotkeys.recordShortcutChangeBtn" = "Đổi phím tắt";
+"settings.hotkeys.recordShortcutCancelBtn" = "Hủy";
+"settings.hotkeys.recordShortcutPrompt" = "Bấm để đổi phím tắt mới";
+"settings.hotkeys.recordShortcutActive" = "Nhấn tổ hợp phím mới...";
+"settings.hotkeys.recordShortcutModifierNeeded" = "Phím tắt phải kèm ít nhất 1 phím bổ trợ (⌘, ⌥, ⌃, ⇧)";
+"settings.hotkeys.recordShortcutReset" = "Đặt lại mặc định (⌘ ⇧ V)";
+"settings.hotkeys.recordShortcutCancelTip" = "Nhấn phím Esc hoặc bấm Hủy để thoát";
+"settings.accessibility.section" = "Quyền Trợ năng (Accessibility)";
+"settings.accessibility.granted" = "Đã được cấp quyền Trợ năng";
+"settings.accessibility.notGranted" = "Chưa được cấp quyền Trợ năng";
+"settings.accessibility.openSettings" = "Mở Cài đặt hệ thống";
+"settings.accessibility.openSystemSettings" = "Mở Cài đặt hệ thống";
+"settings.accessibility.desc" = "Quyền Trợ năng cần thiết để Clipback có thể gửi phím tắt ⌘V dán tự động vào ứng dụng đích.";
+"settings.accessibility.warningBanner" = "Cần cấp quyền Trợ năng để tự động dán (Enter). Bấm để cấp quyền trong Cài đặt hệ thống.";
+"settings.accessibility.grantBtn" = "Cấp quyền";
+"dialog.accessibility.title" = "Yêu cầu quyền Trợ năng (Accessibility)";
+"dialog.accessibility.message" = "Clipback cần quyền Trợ năng để tự động dán nội dung vào ứng dụng bạn đang làm việc.\n\nNội dung đã được sao chép vào Clipboard. Vui lòng cấp quyền cho Clipback trong Cài đặt hệ thống để kích hoạt tính năng tự động dán.";
+
+/* Content Filters & Privacy */
+"settings.filters.privacy" = "Quyền riêng tư";
+"settings.filters.pauseRecording" = "Tạm dừng ghi nhận clipboard";
+"settings.filters.excludedApps" = "Ứng dụng loại trừ (bundle ID)";
+"settings.filters.excludedAppsExample" = "Ví dụ: com.apple.Terminal, com.example.app. Áp dụng cho các lần sao chép tiếp theo.";
+"settings.filters.allowedTypesHeader" = "Loại nội dung cho phép lưu trữ";
+"settings.filters.typeText" = "Văn bản thuần & Rich Text / HTML";
+"settings.filters.typeImage" = "Hình ảnh (hỗ trợ OCR nhận diện chữ)";
+"settings.filters.detectQrInImages" = "Nhận diện mã QR trong hình ảnh";
+"settings.filters.typeColor" = "Mã màu thông minh (HEX, RGB, HSL)";
+"settings.filters.typeFile" = "Tệp tin hệ thống & Đường dẫn";
+"settings.filters.allowedTypesFooter" = "Bỏ chọn một loại nội dung sẽ ngăn Clipback lưu loại dữ liệu đó khi bạn thực hiện sao chép.";
+
+/* Storage & Retention Policies */
+"settings.storage.header" = "Chính sách lưu trữ lịch sử";
+"settings.storage.retrySave" = "Thử lưu lại";
+"settings.storage.retainedContent" = "Nội dung đang lưu (ước tính)";
+"settings.storage.contentSizeLimit" = "Giới hạn dung lượng nội dung";
+"settings.storage.limitNote" = "Giảm giới hạn sẽ dọn các mục cũ. Mục ghim được giữ và có thể vượt giới hạn. Số liệu không bao gồm bản sao lưu và mục đang chờ hoàn tác.";
+"settings.storage.unlimited" = "Không giới hạn";
+"settings.storage.retentionStrategy" = "Cách thức giới hạn:";
+"settings.storage.retentionByCount" = "Item";
+"settings.storage.retentionByTime" = "Time";
+"settings.storage.maxItemsPicker" = "Số lượng mục lưu tối đa:";
+"settings.storage.maxDaysPicker" = "Thời gian lưu trữ tối đa:";
+"settings.storage.duration7Days" = "7 ngày";
+"settings.storage.duration14Days" = "14 ngày";
+"settings.storage.duration30Days" = "30 ngày";
+"settings.storage.duration90Days" = "90 ngày";
+"settings.storage.durationForever" = "Vĩnh viễn (Không xóa)";
+"settings.storage.countUnlimited" = "Không giới hạn";
+"settings.storage.pinNotice" = "Các mục được Ghim (Pin) sẽ không bao giờ bị tự động xóa bất kể số lượng hoặc thời gian.";
+"settings.storage.sensitiveDataHeader" = "Bảo vệ dữ liệu nhạy cảm";
+"settings.storage.sensitiveDataBadge" = "Bỏ qua nội dung được đánh dấu nhạy cảm";
+"settings.storage.sensitiveDataDesc" = "Clipback bỏ qua nội dung có cờ ConcealedType/TransientType. Nội dung không được ứng dụng nguồn đánh dấu vẫn có thể được lưu. Lịch sử và ảnh lưu cục bộ, chưa mã hóa ở tầng ứng dụng.";
+"settings.storage.clearHistoryHeader" = "Dọn dẹp lịch sử";
+"settings.storage.clearKeepPinned" = "Xóa lịch sử (giữ mục ghim)";
+"settings.storage.clearAllCompletely" = "Xóa tất cả hoàn toàn";
+"settings.storage.clearAllConfirmTitle" = "Xác nhận xóa toàn bộ lịch sử";
+"settings.storage.clearAllConfirmDesc" = "Thao tác này sẽ xóa vĩnh viễn toàn bộ lịch sử clipboard (bao gồm cả các mục đã ghim) và không thể hoàn tác. Bạn có chắc chắn muốn xóa không?";
+"settings.storage.clearSuccessKeepPinnedNotification" = "Đã dọn dẹp lịch sử (đã bảo lưu các mục ghim) thành công!";
+"settings.storage.clearSuccessAllNotification" = "Đã xóa toàn bộ lịch sử clipboard thành công!";
+
+/* About Tab */
+"about.tagline" = "Trình quản lý lịch sử Clipboard Native hiện đại cho macOS";
+"about.author" = "Tác giả";
+"about.authorName" = "nhanchaukp (Nhan Chau Thai)";
+"about.github" = "Mã nguồn";
+"about.githubRepo" = "nhanchaukp/clipback";
+"about.viewGithub" = "Xem trên GitHub";
+"about.license" = "Giấy phép";
+"about.licenseName" = "MIT License";
+"about.tech" = "Công nghệ";
+"about.techDesc" = "Swift • SwiftUI • AppKit";
+"about.copyright" = "Bản quyền © 2026 nhanchaukp. Đã đăng ký bản quyền.";
+"about.versionPrefix" = "Phiên bản";
+
+/* Menu Bar */
+"menu.openClipback" = "Mở Clipback";
+"menu.openClipory" = "Mở Clipback";
+"menu.settings" = "Cài đặt...";
+"menu.about" = "Giới thiệu Clipback";
+"menu.checkUpdates" = "Kiểm tra bản cập nhật...";
+"menu.clearHistory" = "Xóa toàn bộ lịch sử";
+"menu.quit" = "Thoát";
+"menu.clearConfirmTitle" = "Xác nhận xóa lịch sử Clipboard";
+"menu.clearConfirmDesc" = "Bạn có chắc chắn muốn xóa lịch sử không? (Các mục được Ghim sẽ vẫn được giữ lại).";
+"menu.confirmBtn" = "Xóa";
+"menu.cancelBtn" = "Hủy";
+
+/* Date Sections & List Appearance */
+"date.today" = "Hôm nay";
+"date.yesterday" = "Hôm qua";
+"date.daysAgo" = "%d ngày trước";
+"date.oneDayAgo" = "1 ngày trước";
+"settings.appearance.header" = "Hiển thị danh sách";
+"settings.appearance.showSourceAppIcon" = "Biểu tượng ứng dụng nguồn";
+"settings.appearance.showContentTypeBadge" = "Huy hiệu loại nội dung";
+"settings.appearance.showImageThumbnail" = "Hình ảnh thu nhỏ xem trước";
+"settings.appearance.footer" = "Tùy chỉnh các thành phần hiển thị trên từng dòng của danh sách lịch sử.";
+
+/* Update Checker */
+"update.menuCheck" = "Kiểm tra cập nhật...";
+"update.checkButton" = "Kiểm tra cập nhật";
+"update.checking" = "Đang kiểm tra...";
+"update.upToDate" = "Clipback đang ở bản mới nhất";
+"update.availableTitle" = "Đã có bản cập nhật mới!";
+"update.availableDesc" = "Phiên bản %@ đã sẵn sàng để tải xuống.";
+"update.downloadButton" = "Tải bản cập nhật";
+"update.viewRelease" = "Xem chi tiết";
+"update.autoCheckToggle" = "Tự động kiểm tra bản cập nhật mới";
+"update.lastChecked" = "Kiểm tra lần cuối: %@";
+"update.failed" = "Không thể kiểm tra cập nhật";
+"update.failedDesc" = "Đã xảy ra lỗi khi kết nối đến GitHub: %@";
+"update.dismiss" = "Đóng";
+
+/* Alerts & Errors */
+"alert.unsavedHistory.title" = "Chưa lưu được lịch sử";
+"alert.unsavedHistory.goBack" = "Quay lại";
+"alert.unsavedHistory.quitAnyway" = "Vẫn thoát";
+"alert.hotkeyUnavailable" = "Không đăng ký được phím tắt. Hãy chọn tổ hợp khác trong Cài đặt.";
+
+"menu.tooltip" = "Clipback — Lịch sử Clipboard (%@)";
+"update.upToDateDesc" = "Bạn đang sử dụng phiên bản Clipback mới nhất (v%@).";
+
+/* Error & Exception Messages */
+"error.storage.saveFailed" = "Không lưu được lịch sử. Kiểm tra dung lượng và quyền ghi thư mục dữ liệu.";
+"error.storage.corruptBackup" = "Lịch sử bị lỗi. Bản gốc đã được sao lưu thành history.corrupt…json; ảnh cũ được giữ nguyên.";
+"error.storage.readFailed" = "Không đọc được lịch sử. Dữ liệu được giữ nguyên; hãy kiểm tra quyền truy cập rồi mở lại ứng dụng.";
+
+"error.monitor.queueFull" = "Clipboard quá lớn hoặc đang xử lý quá nhiều mục. Mục này chưa được lưu.";
+"error.monitor.imageSaveFailed" = "Không lưu được ảnh clipboard. Ảnh có thể quá lớn, bị lỗi hoặc ổ đĩa đã đầy.";
+
+"error.paste.itemUnavailable" = "Không đọc được mục này. Clipboard của bạn được giữ nguyên.";
+"error.paste.clipboardChanged" = "Clipboard đã thay đổi trong lúc chuẩn bị. Hãy thử lại.";
+"error.paste.writeFailed" = "Không ghi được vào clipboard.";

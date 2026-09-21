@@ -1,0 +1,291 @@
+name: Release (Automated)
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+      - build_release
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: 'Publish as draft release instead of public'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    name: Build, Sign, Notarize & Release
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Record toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          uname -m
+
+      - name: Extract release metadata
+        id: metadata
+        run: |
+          version=$(grep -m 1 "MARKETING_VERSION" Clipback.xcodeproj/project.pbxproj | awk '{print $3}' | tr -d ';' | tr -d '"')
+          if [[ -z "$version" ]]; then
+            version="1.0.0"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tag="${GITHUB_REF#refs/tags/}"
+          else
+            tag="v${version}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Version: $version, Tag: $tag"
+
+      - name: Setup Apple Developer ID Certificate
+        id: cert
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        run: |
+          if [[ -n "$MACOS_CERTIFICATE" && -n "$MACOS_CERTIFICATE_PWD" ]]; then
+            echo "Setting up temporary keychain for Developer ID certificate..."
+            KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
+            KEYCHAIN_PASSWORD=$(openssl rand -base64 16)
+            echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+            security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+            security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+            security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+            CERT_PATH="$RUNNER_TEMP/certificate.p12"
+            echo "$MACOS_CERTIFICATE" | base64 --decode > "$CERT_PATH"
+            security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PWD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+            rm -f "$CERT_PATH"
+
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+            security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed -e 's/"//g')
+
+            SIGNING_ID=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application:" | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/' || true)
+            if [[ -z "$SIGNING_ID" ]]; then
+              echo "::warning::Developer ID Application certificate not found in keychain. Falling back to ad-hoc."
+              echo "SIGNING_IDENTITY=-" >> "$GITHUB_ENV"
+            else
+              echo "SIGNING_IDENTITY=$SIGNING_ID" >> "$GITHUB_ENV"
+              echo "Successfully imported certificate: $SIGNING_ID"
+            fi
+          else
+            echo "::warning::MACOS_CERTIFICATE secrets not configured. Building with ad-hoc signature."
+            echo "SIGNING_IDENTITY=-" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build & Package (Apple Silicon, Intel, Universal)
+        run: |
+          mkdir -p build/artifacts
+
+          build_variant() {
+            local arch_name="$1"     # arm64, x86_64, or Universal
+            local arch_flags="$2"    # "arm64", "x86_64", or "arm64 x86_64"
+            local dmg_name="Clipback-${arch_name}.dmg"
+
+            echo "=============================================="
+            echo "📦 Building variant: $arch_name ($arch_flags)"
+            echo "=============================================="
+
+            local derived_data="build/DerivedData_${arch_name}"
+            rm -rf "$derived_data"
+
+            xcodebuild build \
+              -project Clipback.xcodeproj \
+              -scheme Clipback \
+              -configuration Release \
+              -destination "generic/platform=macOS" \
+              -derivedDataPath "$derived_data" \
+              ARCHS="$arch_flags" \
+              ONLY_ACTIVE_ARCH=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGN_IDENTITY=""
+
+            local raw_app="$derived_data/Build/Products/Release/Clipback.app"
+            if [[ ! -d "$raw_app" ]]; then
+              echo "❌ Error: $raw_app does not exist!" >&2
+              exit 1
+            fi
+
+            # Stage the app bundle
+            local stage_dir="build/stage_${arch_name}"
+            rm -rf "$stage_dir"
+            mkdir -p "$stage_dir"
+            local staged_app="$stage_dir/Clipback.app"
+            cp -R "$raw_app" "$staged_app"
+
+            # Code sign the application
+            if [[ "$SIGNING_IDENTITY" == "-" ]]; then
+              codesign --force --deep --sign - "$staged_app"
+            else
+              codesign --force --deep --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$staged_app"
+            fi
+            codesign --verify --deep --strict --verbose=2 "$staged_app"
+
+            # Create DMG
+            local dmg_stage="build/dmg_stage_${arch_name}"
+            rm -rf "$dmg_stage"
+            mkdir -p "$dmg_stage"
+            cp -R "$staged_app" "$dmg_stage/"
+            ln -s /Applications "$dmg_stage/Applications"
+
+            if [[ -f "Clipback/Resources/AppIcon.icns" ]]; then
+              cp "Clipback/Resources/AppIcon.icns" "$dmg_stage/.VolumeIcon.icns"
+              SetFile -c icnC "$dmg_stage/.VolumeIcon.icns" 2>/dev/null || true
+              SetFile -a C "$dmg_stage" 2>/dev/null || true
+            fi
+
+            local dmg_path="build/artifacts/$dmg_name"
+            rm -f "$dmg_path"
+            hdiutil create \
+              -volname "Clipback" \
+              -srcfolder "$dmg_stage" \
+              -ov \
+              -format UDZO \
+              "$dmg_path"
+
+            if [[ "$SIGNING_IDENTITY" != "-" ]]; then
+              codesign --force --timestamp --sign "$SIGNING_IDENTITY" "$dmg_path"
+              codesign --verify --verbose=2 "$dmg_path"
+            fi
+
+            rm -rf "$dmg_stage" "$stage_dir" "$derived_data"
+            echo "✅ Finished building $dmg_name"
+          }
+
+          # 1. Apple Silicon (arm64)
+          build_variant "arm64" "arm64"
+
+          # 2. Intel (x86_64)
+          build_variant "x86_64" "x86_64"
+
+          # 3. Universal 2 (arm64 + x86_64)
+          build_variant "Universal" "arm64 x86_64"
+
+          # Default alias for universal package
+          cp build/artifacts/Clipback-Universal.dmg build/artifacts/Clipback.dmg
+
+      - name: Notarize and staple with Apple Notary Service
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          if [[ "$SIGNING_IDENTITY" != "-" && -n "$APPLE_ID" && -n "$APPLE_APP_SPECIFIC_PASSWORD" ]]; then
+            team_id="${APPLE_TEAM_ID:-JMHK6678HR}"
+
+            for target_dmg in build/artifacts/Clipback-arm64.dmg build/artifacts/Clipback-x86_64.dmg build/artifacts/Clipback-Universal.dmg; do
+              echo "Submitting $target_dmg to Apple Notary Service..."
+              xcrun notarytool submit "$target_dmg" \
+                --apple-id "$APPLE_ID" \
+                --team-id "$team_id" \
+                --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+                --wait
+
+              echo "Stapling notarization ticket to $target_dmg..."
+              xcrun stapler staple "$target_dmg"
+              xcrun stapler validate "$target_dmg"
+            done
+
+            cp build/artifacts/Clipback-Universal.dmg build/artifacts/Clipback.dmg
+
+            echo "Validating Gatekeeper acceptance..."
+            spctl --assess --type open --context context:primary-signature --verbose build/artifacts/Clipback-arm64.dmg || true
+            spctl --assess --type open --context context:primary-signature --verbose build/artifacts/Clipback-x86_64.dmg || true
+            spctl --assess --type open --context context:primary-signature --verbose build/artifacts/Clipback-Universal.dmg || true
+            echo "NOTARIZED=true" >> "$GITHUB_ENV"
+          else
+            echo "Skipping Apple Notarization (missing credentials or ad-hoc build)."
+            echo "NOTARIZED=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Generate Checksums
+        run: |
+          cd build/artifacts
+          shasum -a 256 Clipback-arm64.dmg \
+                       Clipback-x86_64.dmg \
+                       Clipback-Universal.dmg \
+                       Clipback.dmg > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Clean up keychain
+        if: always()
+        run: |
+          if [[ -n "${KEYCHAIN_PATH:-}" && -f "${KEYCHAIN_PATH:-}" ]]; then
+            security delete-keychain "$KEYCHAIN_PATH" || true
+          fi
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+          APP_VERSION: ${{ steps.metadata.outputs.version }}
+          IS_DRAFT: ${{ github.event.inputs.draft }}
+        run: |
+          if [[ "$NOTARIZED" == "true" ]]; then
+            security_note="✅ **Apple Notarized & Developer ID Signed** — Gatekeeper approved, no security warnings."
+          else
+            security_note="⚠️ **Ad-hoc Signed** — Not notarized by Apple. Gatekeeper may show a warning on first run."
+          fi
+
+          notes="## Clipback ${APP_VERSION}
+
+          ### 📦 Download Packages
+          | File | Architecture | Description |
+          | :--- | :--- | :--- |
+          | 🍏 **[Clipback-arm64.dmg](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/Clipback-arm64.dmg)** | **Apple Silicon** | Native for Apple Silicon (M1/M2/M3/M4...) |
+          | 🖥️ **[Clipback-x86_64.dmg](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/Clipback-x86_64.dmg)** | **Intel** | Native for Intel Macs |
+          | 🌐 **[Clipback.dmg](https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/Clipback.dmg)** | **Universal 2** | All-in-one package for any Mac |
+
+          - **Minimum System Requirement**: macOS 14.6 (Sonoma) or newer
+          - **Security Status**: ${security_note}
+          - **Built from commit**: \`${GITHUB_SHA}\`
+
+          ### 🔒 Checksums (SHA-256)
+          \`\`\`text
+          $(cat build/artifacts/SHA256SUMS.txt)
+          \`\`\`"
+
+          extra_flags=()
+          if [[ "$IS_DRAFT" == "true" ]]; then
+            extra_flags+=(--draft)
+          fi
+
+          files_to_upload=(
+            build/artifacts/Clipback-arm64.dmg
+            build/artifacts/Clipback-x86_64.dmg
+            build/artifacts/Clipback-Universal.dmg
+            build/artifacts/Clipback.dmg
+            build/artifacts/SHA256SUMS.txt
+          )
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists. Uploading assets..."
+            gh release upload "$RELEASE_TAG" "${files_to_upload[@]}" --clobber
+          else
+            echo "Creating release $RELEASE_TAG..."
+            gh release create "$RELEASE_TAG" \
+              "${files_to_upload[@]}" \
+              --target "$GITHUB_SHA" \
+              --title "Clipback ${APP_VERSION}" \
+              --notes "$notes" \
+              "${extra_flags[@]}"
+          fi

@@ -1,0 +1,211 @@
+/* 
+  Localizable.strings (English)
+  Clipback
+*/
+
+/* Navigation & Filters */
+"filter.all" = "All";
+"filter.text" = "Text";
+"filter.image" = "Images";
+"filter.color" = "Colors";
+"filter.link" = "Links";
+"filter.pinned" = "Pinned";
+
+/* Search & HUD */
+"search.placeholder" = "Search clipboard history (including text in images)...";
+"search.noResults" = "No results found";
+"search.selectItemPreview" = "Select an item to preview";
+"search.itemsCount.singular" = "1 item";
+"search.itemsCount.plural" = "%d items";
+"search.settingsTooltip" = "Settings (⌘,)";
+"search.loadingHistory" = "Loading history…";
+"search.emptyPrompt" = "Copy something to get started.";
+
+/* Action Bar */
+"action.paste" = "Paste";
+"action.copy" = "Copy";
+"action.pastePlain" = "Paste Plain";
+"action.pin" = "Pin";
+"action.unpin" = "Unpin";
+"action.delete" = "Delete";
+
+/* Detail Inspector */
+"detail.textTypeLabel" = "Text Content";
+"detail.textStats" = "%d characters • %d words";
+"detail.ocrHeader" = "Recognized Text in Image (OCR)";
+"detail.openInBrowser" = "Open in Browser";
+"detail.webLink" = "Web Link";
+"detail.systemFiles" = "System Files";
+"detail.qrDetectedHeader" = "Detected QR Code";
+"detail.qrGenerateTab" = "QR Code";
+"detail.qrGenerateTip" = "Scan with mobile camera to quickly open URL";
+"detail.copyQrImage" = "Copy QR Image";
+"detail.qrImageCopied" = "QR Image Copied!";
+"detail.copyQrText" = "Copy QR Text";
+"detail.openQrLink" = "Open QR Link";
+
+/* Settings Window Tabs */
+"settings.title" = "Clipback — Settings";
+"settings.tab.general" = "General";
+"settings.tab.hotkeys" = "Hotkeys";
+"settings.tab.filters" = "Filters";
+"settings.tab.storage" = "Storage";
+"settings.tab.about" = "About";
+
+/* General Settings */
+"settings.general.language" = "Interface Language";
+"settings.general.launchAtLogin" = "Launch at login";
+"settings.general.showInMenuBar" = "Show icon in menu bar";
+"settings.general.menuBarHiddenTip" = "Tip: When the Menu Bar icon is hidden, press ⌘, anytime while Clipback is open to access Settings.";
+"settings.general.menuBarIconStyleHeader" = "Menu Bar Icon Style";
+"settings.general.menuBarAdaptiveColor" = "Adaptive";
+"settings.general.menuBarDarkColor" = "Dark";
+"settings.general.menuBarLightColor" = "Light";
+"settings.general.menuBarMonochrome" = "Monochrome";
+"settings.general.soundEffects" = "Play sound on copy & paste";
+"settings.general.directPaste" = "Direct paste to previous application";
+"settings.general.directPasteFooter" = "When Direct Paste is enabled, selecting an item will paste it directly into your active application (requires Accessibility permission).";
+"settings.general.hudOpacityHeader" = "HUD Window Background";
+"settings.general.hudOpacityAntiGlare" = "Anti-Glare (Recommended)";
+"settings.general.hudOpacitySolid" = "Solid (100%)";
+"settings.general.hudOpacityTranslucent" = "Translucent (85%)";
+"settings.general.launchAtLoginError" = "Could not change launch at login. Check System Settings > General > Login Items.";
+
+/* Hotkeys & Permissions */
+"settings.hotkeys.globalHotkeyHeader" = "Global Shortcut";
+"settings.hotkeys.globalHotkeyDesc" = "Toggle Clipback search bar from anywhere on your Mac.";
+"settings.hotkeys.toggleShortcutRowTitle" = "Toggle Clipback";
+"settings.hotkeys.recordShortcutChangeBtn" = "Change Shortcut";
+"settings.hotkeys.recordShortcutCancelBtn" = "Cancel";
+"settings.hotkeys.recordShortcutPrompt" = "Click to record shortcut";
+"settings.hotkeys.recordShortcutActive" = "Press shortcut keys...";
+"settings.hotkeys.recordShortcutModifierNeeded" = "Shortcut must include at least one modifier (⌘, ⌥, ⌃, ⇧)";
+"settings.hotkeys.recordShortcutReset" = "Reset to default (⌘ ⇧ V)";
+"settings.hotkeys.recordShortcutCancelTip" = "Press Esc or click Cancel to exit";
+"settings.accessibility.section" = "Accessibility Permission";
+"settings.accessibility.granted" = "Accessibility Permission Granted";
+"settings.accessibility.notGranted" = "Accessibility Permission Needed";
+"settings.accessibility.openSettings" = "Open System Settings";
+"settings.accessibility.openSystemSettings" = "Open System Settings";
+"settings.accessibility.desc" = "Accessibility permission is required for Clipback to simulate the ⌘V paste keystroke into other applications.";
+"settings.accessibility.warningBanner" = "Accessibility permission needed for Direct Paste (Enter). Click to grant in System Settings.";
+"settings.accessibility.grantBtn" = "Grant";
+"dialog.accessibility.title" = "Accessibility Permission Required";
+"dialog.accessibility.message" = "Clipback needs Accessibility permission to automatically paste content into your active application.\n\nThe item has been copied to your Clipboard. Please grant permission in System Settings to enable automatic pasting.";
+
+/* Content Filters & Privacy */
+"settings.filters.privacy" = "Privacy";
+"settings.filters.pauseRecording" = "Pause clipboard recording";
+"settings.filters.excludedApps" = "Excluded apps (bundle IDs)";
+"settings.filters.excludedAppsExample" = "Example: com.apple.Terminal, com.example.app. Applies to future copies.";
+"settings.filters.allowedTypesHeader" = "Allowed Content Types";
+"settings.filters.typeText" = "Plain Text & Rich Text / HTML";
+"settings.filters.typeImage" = "Images (with Vision OCR search)";
+"settings.filters.detectQrInImages" = "Detect QR codes in images";
+"settings.filters.typeColor" = "Color Codes (HEX, RGB, HSL)";
+"settings.filters.typeFile" = "System Files & URLs";
+"settings.filters.allowedTypesFooter" = "Unchecking a content type will prevent Clipback from capturing that type of data when copied.";
+
+/* Storage & Retention Policies */
+"settings.storage.header" = "History Retention Policy";
+"settings.storage.retrySave" = "Retry saving";
+"settings.storage.retainedContent" = "Retained content (estimated)";
+"settings.storage.contentSizeLimit" = "Content size limit";
+"settings.storage.limitNote" = "Lowering the limit prunes older items. Pinned items are kept and may exceed the limit. Backups and items awaiting Undo are excluded from this estimate.";
+"settings.storage.unlimited" = "Unlimited";
+"settings.storage.retentionStrategy" = "Retention strategy:";
+"settings.storage.retentionByCount" = "Item";
+"settings.storage.retentionByTime" = "Time";
+"settings.storage.maxItemsPicker" = "Max saved items:";
+"settings.storage.maxDaysPicker" = "Keep items for:";
+"settings.storage.duration7Days" = "7 Days";
+"settings.storage.duration14Days" = "14 Days";
+"settings.storage.duration30Days" = "30 Days";
+"settings.storage.duration90Days" = "90 Days";
+"settings.storage.durationForever" = "Forever (Never delete)";
+"settings.storage.countUnlimited" = "Unlimited";
+"settings.storage.pinNotice" = "Pinned items are never automatically deleted regardless of item count or duration.";
+"settings.storage.sensitiveDataHeader" = "Sensitive Data Protection";
+"settings.storage.sensitiveDataBadge" = "Skip content marked as sensitive";
+"settings.storage.sensitiveDataDesc" = "Clipback skips ConcealedType/TransientType content. Content not marked by its source app may still be saved. History and images are local and are not encrypted by the app.";
+"settings.storage.clearHistoryHeader" = "Clear History";
+"settings.storage.clearKeepPinned" = "Clear History (Keep Pinned)";
+"settings.storage.clearAllCompletely" = "Clear All Completely";
+"settings.storage.clearAllConfirmTitle" = "Confirm Clear All History";
+"settings.storage.clearAllConfirmDesc" = "This will permanently delete all clipboard history (including pinned items) and cannot be undone. Are you sure you want to proceed?";
+"settings.storage.clearSuccessKeepPinnedNotification" = "Successfully cleared history (pinned items preserved)!";
+"settings.storage.clearSuccessAllNotification" = "All clipboard history cleared successfully!";
+
+/* About Tab */
+"about.tagline" = "Modern Native macOS Clipboard History Manager";
+"about.author" = "Author";
+"about.authorName" = "nhanchaukp (Nhan Chau Thai)";
+"about.github" = "Repository";
+"about.githubRepo" = "nhanchaukp/clipback";
+"about.viewGithub" = "View on GitHub";
+"about.license" = "License";
+"about.licenseName" = "MIT License";
+"about.tech" = "Tech Stack";
+"about.techDesc" = "Swift • SwiftUI • AppKit";
+"about.copyright" = "Copyright © 2026 nhanchaukp. All rights reserved.";
+"about.versionPrefix" = "Version";
+
+/* Menu Bar */
+"menu.openClipback" = "Open Clipback";
+"menu.openClipory" = "Open Clipback";
+"menu.settings" = "Settings...";
+"menu.about" = "About Clipback";
+"menu.checkUpdates" = "Check for Updates...";
+"menu.clearHistory" = "Clear History";
+"menu.quit" = "Quit";
+"menu.clearConfirmTitle" = "Confirm Clear Clipboard History";
+"menu.clearConfirmDesc" = "Are you sure you want to clear your history? (Pinned items will be preserved).";
+"menu.confirmBtn" = "Clear";
+"menu.cancelBtn" = "Cancel";
+
+/* Date Sections & List Appearance */
+"date.today" = "Today";
+"date.yesterday" = "Yesterday";
+"date.daysAgo" = "%d days ago";
+"date.oneDayAgo" = "1 day ago";
+"settings.appearance.header" = "List Item Appearance";
+"settings.appearance.showSourceAppIcon" = "Source Application Icon";
+"settings.appearance.showContentTypeBadge" = "Content Type Badge";
+"settings.appearance.showImageThumbnail" = "Image Thumbnail Preview";
+"settings.appearance.footer" = "Customize elements displayed on each row in the clipboard history list.";
+
+/* Update Checker */
+"update.menuCheck" = "Check for Updates...";
+"update.checkButton" = "Check for Updates";
+"update.checking" = "Checking for updates...";
+"update.upToDate" = "Clipback is up to date";
+"update.availableTitle" = "New Version Available!";
+"update.availableDesc" = "Version %@ is now available for download.";
+"update.downloadButton" = "Download Update";
+"update.viewRelease" = "View Release";
+"update.autoCheckToggle" = "Automatically check for updates";
+"update.lastChecked" = "Last checked: %@";
+"update.failed" = "Unable to check for updates";
+"update.failedDesc" = "An error occurred while connecting to GitHub: %@";
+"update.dismiss" = "Dismiss";
+
+/* Alerts & Errors */
+"alert.unsavedHistory.title" = "History has not been saved";
+"alert.unsavedHistory.goBack" = "Go Back";
+"alert.unsavedHistory.quitAnyway" = "Quit Anyway";
+"alert.hotkeyUnavailable" = "The shortcut is unavailable. Choose another combination in Settings.";
+
+"menu.tooltip" = "Clipback — Clipboard History (%@)";
+"update.upToDateDesc" = "You are currently running the latest version of Clipback (v%@).";
+
+/* Error & Exception Messages */
+"error.storage.saveFailed" = "History could not be saved. Check free disk space and folder permissions.";
+"error.storage.corruptBackup" = "History was damaged. Original data was backed up as history.corrupt…json; existing images were preserved.";
+"error.storage.readFailed" = "History could not be read. Existing data is unchanged; check permissions and reopen the app.";
+
+"error.monitor.queueFull" = "The clipboard is too large or the capture queue is full. This item was not saved.";
+"error.monitor.imageSaveFailed" = "Clipboard image could not be saved. It may be too large, damaged, or the disk may be full.";
+
+"error.paste.itemUnavailable" = "The item is unavailable. Your clipboard was not changed.";
+"error.paste.clipboardChanged" = "Clipboard changed while preparing the item. Try again.";
+"error.paste.writeFailed" = "Could not write to the clipboard.";
