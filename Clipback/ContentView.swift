@@ -308,7 +308,6 @@ public struct ContentView: View {
                     Spacer()
                     
                     Button(L10n.openSystemSettings(lang: lang)) {
-                        AccessibilityManager.shared.requestAccessibility()
                         AccessibilityManager.shared.openAccessibilitySettings()
                     }
                 }

@@ -9,22 +9,26 @@ public final class AccessibilityManager {
     
     private init() {}
     
-    /// Checks whether the application is trusted for Accessibility
+    /// Checks whether the application is trusted for Accessibility without prompting
     public var isAccessibilityGranted: Bool {
         return AXIsProcessTrusted()
     }
     
-    /// Prompts the system permission dialog if not already trusted
+    /// Opens the Accessibility pane in System Settings directly without prompting the system dialog
     @discardableResult
     public func requestAccessibility() -> Bool {
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        return AXIsProcessTrustedWithOptions(options)
+        openAccessibilitySettings()
+        return isAccessibilityGranted
     }
     
     /// Opens the Accessibility pane directly in macOS System Settings
     public func openAccessibilitySettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-            NSWorkspace.shared.open(url)
+            if !NSWorkspace.shared.open(url) {
+                if let fallbackUrl = URL(string: "x-apple.systempreferences:") {
+                    NSWorkspace.shared.open(fallbackUrl)
+                }
+            }
         }
     }
 }

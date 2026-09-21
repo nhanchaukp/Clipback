@@ -502,7 +502,6 @@ public struct HistoryMainView: View {
         
         NSApp.activate(ignoringOtherApps: true)
         if alert.runModal() == .alertFirstButtonReturn {
-            AccessibilityManager.shared.requestAccessibility()
             AccessibilityManager.shared.openAccessibilitySettings()
         }
     }

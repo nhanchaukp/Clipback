@@ -18,7 +18,6 @@ private struct SystemPasteEnvironment: PasteEnvironment {
     func isAlive(_ pid: pid_t) -> Bool { NSRunningApplication(processIdentifier: pid)?.isTerminated == false }
     func activate(_ pid: pid_t) -> Bool { NSRunningApplication(processIdentifier: pid)?.activate() ?? false }
     func requestPermission() {
-        AccessibilityManager.shared.requestAccessibility()
         AccessibilityManager.shared.openAccessibilitySettings()
     }
     func postPaste(to pid: pid_t) -> Bool {

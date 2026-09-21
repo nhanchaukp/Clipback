@@ -279,16 +279,7 @@ public final class UpdateChecker: ObservableObject {
             alert.alertStyle = .informational
             alert.messageText = L10n.updateAvailableTitle(lang: lang)
             
-            var info = L10n.updateAvailableDesc(version: release.version, lang: lang)
-            if !release.name.isEmpty && release.name != release.version {
-                info += "\n\n" + release.name
-            }
-            if !release.body.isEmpty {
-                // Short preview of release notes (up to 300 characters)
-                let preview = release.body.prefix(300)
-                info += "\n\n" + preview + (release.body.count > 300 ? "..." : "")
-            }
-            alert.informativeText = info
+            alert.informativeText = L10n.updateAvailableDesc(version: release.version, lang: lang)
             
             alert.addButton(withTitle: L10n.updateDownloadButton(lang: lang))
             alert.addButton(withTitle: L10n.updateViewRelease(lang: lang))
