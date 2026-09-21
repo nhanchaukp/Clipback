@@ -36,7 +36,7 @@ public final class MenuBarManager: NSObject {
             title: L10n.menuOpenClipback(lang: lang),
             action: #selector(openClipboard),
             keyEquivalent: keyChar,
-            symbolName: "doc.on.clipboard",
+            symbolName: "interface.window",
             modifierMask: cocoaMods
         )
         menu.addItem(showItem)
