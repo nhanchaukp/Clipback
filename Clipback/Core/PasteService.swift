@@ -88,7 +88,7 @@ public final class PasteService: ObservableObject {
     }
 
     @discardableResult
-    public func copyToClipboard(_ item: ClipboardItem, plainTextOnly: Bool = false) async -> Bool {
+    public func copyToClipboard(_ item: ClipboardItem, plainTextOnly: Bool = false, playSound: Bool = true) async -> Bool {
         operationID = UUID() // Any new copy cancels an earlier pending paste.
         let token = operationID
         let previousCount = pasteboard.changeCount
@@ -103,6 +103,9 @@ public final class PasteService: ObservableObject {
             return fail(L10n.errorPasteWriteFailed(lang: settings.appLanguage))
         }
         lastError = nil
+        if playSound && settings.playSounds {
+            SoundEffectManager.playSound(named: settings.soundName)
+        }
         return true
     }
 
@@ -112,15 +115,17 @@ public final class PasteService: ObservableObject {
         isBusy = true
         defer { isBusy = false }
         let target = previousApplication?.processIdentifier ?? environment.activePID
-        guard await copyToClipboard(item, plainTextOnly: plainTextOnly) else { return false }
+        guard await copyToClipboard(item, plainTextOnly: plainTextOnly, playSound: !settings.pasteDirectly) else { return false }
         guard settings.pasteDirectly else { return true }
         guard environment.isTrusted else {
             // Accessibility is not granted: item has been copied to clipboard.
             // Silently close HUD without alerts or opening system settings.
+            if settings.playSounds { SoundEffectManager.playSound(named: settings.soundName) }
             return true
         }
         guard let target, target != ProcessInfo.processInfo.processIdentifier,
               environment.isAlive(target), environment.activate(target) else {
+            if settings.playSounds { SoundEffectManager.playSound(named: settings.soundName) }
             return true
         }
         let token = operationID
@@ -135,7 +140,7 @@ public final class PasteService: ObservableObject {
             stableSamples = active == target ? stableSamples + 1 : 0
             if stableSamples >= 2 {
                 guard environment.postPaste(to: target) else { break }
-                if settings.playSounds { NSSound(named: "Pop")?.play() }
+                if settings.playSounds { SoundEffectManager.playSound(named: settings.soundName) }
                 return true
             }
         }

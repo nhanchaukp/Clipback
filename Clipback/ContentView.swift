@@ -242,6 +242,32 @@ public struct ContentView: View {
                 Toggle(isOn: $settings.playSounds) {
                     Label(L10n.soundEffects(lang: lang), systemImage: "speaker.wave.2")
                 }
+                
+                if settings.playSounds {
+                    HStack {
+                        Picker(selection: $settings.soundName) {
+                            ForEach(SoundEffectManager.availableSounds, id: \.self) { sound in
+                                Text(sound).tag(sound)
+                            }
+                        } label: {
+                            Label(L10n.soundSelection(lang: lang), systemImage: "waveform")
+                        }
+                        .pickerStyle(.menu)
+                        .onChange(of: settings.soundName) { _, newSound in
+                            SoundEffectManager.playSound(named: newSound)
+                        }
+                        
+                        Button {
+                            SoundEffectManager.playSound(named: settings.soundName)
+                        } label: {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 11))
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .help(L10n.previewSound(lang: lang))
+                    }
+                }
             } header: {
                 Text(L10n.tabGeneral(lang: lang))
             }

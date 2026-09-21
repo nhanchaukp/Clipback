@@ -34,7 +34,7 @@ nonisolated public struct L10n {
                 return val
             }
             
-            // Load table if not yet cached
+            // warm up table cache
             let table = loadTable(for: lang)
             tableCache[code] = table
             if let val = table[key] {
@@ -174,6 +174,8 @@ nonisolated public struct L10n {
     public static func menuBarLightColor(lang: AppLanguage) -> String { tr("settings.general.menuBarLightColor", lang: lang) }
     public static func menuBarMonochrome(lang: AppLanguage) -> String { tr("settings.general.menuBarMonochrome", lang: lang) }
     public static func soundEffects(lang: AppLanguage) -> String { tr("settings.general.soundEffects", lang: lang) }
+    public static func soundSelection(lang: AppLanguage) -> String { tr("settings.general.soundSelection", lang: lang) }
+    public static func previewSound(lang: AppLanguage) -> String { tr("settings.general.previewSound", lang: lang) }
     public static func directPaste(lang: AppLanguage) -> String { tr("settings.general.directPaste", lang: lang) }
     public static func directPasteFooter(lang: AppLanguage) -> String { tr("settings.general.directPasteFooter", lang: lang) }
     public static func hudOpacityHeader(lang: AppLanguage) -> String { tr("settings.general.hudOpacityHeader", lang: lang) }

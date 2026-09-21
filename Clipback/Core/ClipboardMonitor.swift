@@ -152,6 +152,9 @@ public final class ClipboardMonitor {
                 ocrQueue.append((retained.id, name, data, settings.detectQrInImages))
                 if ocrTask == nil { ocrTask = Task { await processOCR() } }
             }
+            if retained != nil, settings.playSounds {
+                SoundEffectManager.playSound(named: settings.soundName)
+            }
         }
     }
 

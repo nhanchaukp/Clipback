@@ -63,6 +63,8 @@
 "settings.general.menuBarLightColor" = "Sáng";
 "settings.general.menuBarMonochrome" = "Đơn sắc";
 "settings.general.soundEffects" = "Âm thanh phản hồi khi copy / paste";
+"settings.general.soundSelection" = "Âm thanh hệ thống";
+"settings.general.previewSound" = "Nghe thử âm thanh";
 "settings.general.directPaste" = "Tự động dán trực tiếp (Direct Paste)";
 "settings.general.directPasteFooter" = "Khi bật Direct Paste, chọn một mục trong Clipback sẽ tự động dán nội dung vào ứng dụng bạn đang làm việc (yêu cầu quyền Accessibility).";
 "settings.general.hudOpacityHeader" = "Độ trong suốt cửa sổ tìm kiếm";

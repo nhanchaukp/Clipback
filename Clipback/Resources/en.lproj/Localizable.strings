@@ -63,6 +63,8 @@
 "settings.general.menuBarLightColor" = "Light";
 "settings.general.menuBarMonochrome" = "Monochrome";
 "settings.general.soundEffects" = "Play sound on copy & paste";
+"settings.general.soundSelection" = "System sound";
+"settings.general.previewSound" = "Preview sound";
 "settings.general.directPaste" = "Direct paste to previous application";
 "settings.general.directPasteFooter" = "When Direct Paste is enabled, selecting an item will paste it directly into your active application (requires Accessibility permission).";
 "settings.general.hudOpacityHeader" = "HUD Window Background";

@@ -72,6 +72,10 @@ public final class UserSettings: ObservableObject {
         didSet { defaults.set(playSounds, forKey: Keys.playSounds) }
     }
     
+    @Published public var soundName: String {
+        didSet { defaults.set(soundName, forKey: Keys.soundName) }
+    }
+    
     @Published public var pasteDirectly: Bool {
         didSet { defaults.set(pasteDirectly, forKey: Keys.pasteDirectly) }
     }
@@ -185,7 +189,8 @@ public final class UserSettings: ObservableObject {
         self.showInMenuBar = defaults.object(forKey: Keys.showInMenuBar) as? Bool ?? true
         let savedIconStyle = defaults.string(forKey: Keys.menuBarIconStyle) ?? MenuBarIconStyle.adaptiveColor.rawValue
         self.menuBarIconStyle = MenuBarIconStyle(rawValue: savedIconStyle) ?? .adaptiveColor
-        self.playSounds = defaults.object(forKey: Keys.playSounds) as? Bool ?? true
+        self.playSounds = defaults.object(forKey: Keys.playSounds) as? Bool ?? false
+        self.soundName = defaults.string(forKey: Keys.soundName) ?? SoundEffectManager.defaultSoundName
         self.pasteDirectly = defaults.object(forKey: Keys.pasteDirectly) as? Bool ?? true
         self.hudOpacity = defaults.object(forKey: Keys.hudOpacity) as? Double ?? 0.96
         
@@ -218,6 +223,7 @@ public final class UserSettings: ObservableObject {
         static let showInMenuBar = "showInMenuBar"
         static let menuBarIconStyle = "menuBarIconStyle"
         static let playSounds = "playSounds"
+        static let soundName = "soundName"
         static let pasteDirectly = "pasteDirectly"
         static let hudOpacity = "hudOpacity"
         static let saveText = "saveText"
