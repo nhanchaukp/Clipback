@@ -78,7 +78,7 @@ public final class MenuBarManager: NSObject {
         item.menu = menu
     }
     
-    /// Helper to create an NSMenuItem with explicit SF Symbol image
+    /// Helper to create an NSMenuItem with standard SF Symbol image
     private func createMenuItem(
         title: String,
         action: Selector?,
@@ -91,35 +91,10 @@ public final class MenuBarManager: NSObject {
         if let modifierMask = modifierMask {
             item.keyEquivalentModifierMask = modifierMask
         }
-        if let symbolName = symbolName, let icon = menuIcon(symbolName) {
-            item.image = icon
+        if let symbolName = symbolName {
+            item.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
         }
         return item
-    }
-    
-    /// Creates a rendered template SF Symbol image formatted for NSMenuItem
-    private func menuIcon(_ symbolName: String) -> NSImage? {
-        let pointSize: CGFloat = 13
-        let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
-        guard let symbol = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)?
-            .withSymbolConfiguration(config) else {
-            return nil
-        }
-        
-        let targetSize = NSSize(width: 16, height: 16)
-        let image = NSImage(size: targetSize)
-        image.lockFocus()
-        let symSize = symbol.size
-        let drawRect = NSRect(
-            x: (targetSize.width - symSize.width) / 2,
-            y: (targetSize.height - symSize.height) / 2,
-            width: symSize.width,
-            height: symSize.height
-        )
-        symbol.draw(in: drawRect)
-        image.unlockFocus()
-        image.isTemplate = true
-        return image
     }
     
     /// Initializes the NSStatusItem in the system menu bar
