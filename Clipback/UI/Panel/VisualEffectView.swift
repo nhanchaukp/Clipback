@@ -54,6 +54,11 @@ private final class ConfiguratorNSView: NSView {
             ScrollViewConfigurator.configure(view: self)
         }
     }
+    
+    override func layout() {
+        super.layout()
+        ScrollViewConfigurator.configure(view: self)
+    }
 }
 
 private struct ScrollViewConfigurator: NSViewRepresentable {
@@ -107,11 +112,13 @@ private struct ScrollViewConfigurator: NSViewRepresentable {
         scrollView.scrollerStyle = .overlay
         scrollView.borderType = .noBorder
         scrollView.drawsBackground = false
+        scrollView.backgroundColor = .clear
         scrollView.hasVerticalScroller = true
         scrollView.autohidesScrollers = true
         if let scroller = scrollView.verticalScroller {
             scroller.scrollerStyle = .overlay
             scroller.controlSize = .small
+            scroller.knobStyle = .default
         }
     }
     
@@ -119,15 +126,17 @@ private struct ScrollViewConfigurator: NSViewRepresentable {
         if let scrollView = view.enclosingScrollView {
             return scrollView
         }
+        func searchDescendants(_ v: NSView) -> NSScrollView? {
+            if let sv = v as? NSScrollView { return sv }
+            for sub in v.subviews {
+                if let found = searchDescendants(sub) { return found }
+            }
+            return nil
+        }
         var current: NSView? = view
         while let c = current {
-            if let sv = c as? NSScrollView {
+            if let sv = searchDescendants(c) {
                 return sv
-            }
-            for sub in c.subviews {
-                if let sv = sub as? NSScrollView {
-                    return sv
-                }
             }
             current = c.superview
         }

@@ -116,8 +116,8 @@
 "settings.storage.limitNote" = "Giảm giới hạn sẽ dọn các mục cũ. Mục ghim được giữ và có thể vượt giới hạn. Số liệu không bao gồm bản sao lưu và mục đang chờ hoàn tác.";
 "settings.storage.unlimited" = "Không giới hạn";
 "settings.storage.retentionStrategy" = "Cách thức giới hạn:";
-"settings.storage.retentionByCount" = "Item";
-"settings.storage.retentionByTime" = "Time";
+"settings.storage.retentionByCount" = "Số lượng";
+"settings.storage.retentionByTime" = "Thời gian";
 "settings.storage.maxItemsPicker" = "Số lượng mục lưu tối đa:";
 "settings.storage.maxDaysPicker" = "Thời gian lưu trữ tối đa:";
 "settings.storage.duration7Days" = "7 ngày";
@@ -211,3 +211,31 @@
 "error.paste.itemUnavailable" = "Không đọc được mục này. Clipboard của bạn được giữ nguyên.";
 "error.paste.clipboardChanged" = "Clipboard đã thay đổi trong lúc chuẩn bị. Hãy thử lại.";
 "error.paste.writeFailed" = "Không ghi được vào clipboard.";
+"error.paste.cancelledFocusChanged" = "Đã hủy dán vì ứng dụng đích bị mất tiêu điểm.";
+
+/* Hotkey Warnings */
+"warning.hotkey.defaultUnavailable" = "Phím tắt mặc định không khả dụng. Hãy chọn tổ hợp phím khác trong Cài đặt.";
+"warning.hotkey.registrationFailed" = "Không thể đăng ký phím tắt. Phím tắt có thể đang được ứng dụng khác sử dụng.";
+
+/* HUD & Status */
+"action.dismiss" = "Đóng";
+"status.recordingPaused" = "Ghi nhận clipboard đang tạm dừng";
+"status.itemDeleted" = "Đã xóa mục.";
+"action.undo" = "Hoàn tác";
+"accessibility.clearSearch" = "Xóa nội dung tìm kiếm";
+
+/* Preview Actions & Labels */
+"preview.showFullText" = "Xem toàn bộ văn bản";
+"preview.fullTextNotice" = "Văn bản dài đã được rút gọn để tối ưu hiệu năng.";
+"preview.openFullImage" = "Mở ảnh kích thước đầy đủ";
+"preview.recognizingOcr" = "Đang nhận diện chữ trong ảnh…";
+"preview.recognitionFailed" = "Không thể nhận diện chữ trong ảnh.";
+
+/* Content Types */
+"contentType.text" = "Văn bản";
+"contentType.richText" = "Văn bản định dạng";
+"contentType.image" = "Hình ảnh";
+"contentType.color" = "Mã màu";
+"contentType.link" = "Liên kết";
+"contentType.file" = "Tệp tin";
+

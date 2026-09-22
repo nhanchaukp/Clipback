@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 @MainActor
 public final class StorageManager: ObservableObject {
@@ -16,6 +17,7 @@ public final class StorageManager: ObservableObject {
     private let queue = DispatchQueue(label: "com.clipback.storage", qos: .utility)
     private var loadTask: Task<Void, Never>?
     private var saveTask: Task<Void, Never>?
+    private var undoDismissTask: Task<Void, Never>?
     private var knownImages: Set<String> = []
     private var canWrite = true
     private var recoveryImages: Set<String> = []
@@ -126,14 +128,32 @@ public final class StorageManager: ObservableObject {
 
     public func deleteItem(_ item: ClipboardItem) {
         guard items.contains(where: { $0.id == item.id }) else { return }
-        lastDeletedItem = item
+        undoDismissTask?.cancel()
+        withAnimation(.easeInOut(duration: 0.2)) {
+            lastDeletedItem = item
+        }
         items.removeAll { $0.id == item.id }
         changed()
+        
+        undoDismissTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: .seconds(3))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    self?.lastDeletedItem = nil
+                }
+            } catch {
+                return
+            }
+        }
     }
 
     public func undoDelete() {
+        undoDismissTask?.cancel()
         guard let deleted = lastDeletedItem else { return }
-        lastDeletedItem = nil
+        withAnimation(.easeInOut(duration: 0.2)) {
+            lastDeletedItem = nil
+        }
         items.append(deleted)
         items.sort { $0.timestamp > $1.timestamp }
         // A manual Undo restores the item; retention applies on the next ordinary mutation.
@@ -142,8 +162,11 @@ public final class StorageManager: ObservableObject {
 
     public func clearAll(keepPinned: Bool = true) {
         guard !isLoading else { return }
+        undoDismissTask?.cancel()
         captureGeneration += 1
-        lastDeletedItem = nil
+        withAnimation(.easeInOut(duration: 0.2)) {
+            lastDeletedItem = nil
+        }
         items = keepPinned ? items.filter(\.isPinned) : []
         changed()
     }

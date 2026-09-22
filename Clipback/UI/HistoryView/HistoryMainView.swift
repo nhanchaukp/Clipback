@@ -23,14 +23,6 @@ public struct HistoryMainView: View {
         let count: UInt32
     }
     @State private var scrollCommand: ScrollCommand?
-    @State private var headerHeight: CGFloat = 84
-
-    private struct HeaderHeightPreferenceKey: PreferenceKey {
-        static var defaultValue: CGFloat = 84
-        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-            value = nextValue()
-        }
-    }
     
     public init() {}
     
@@ -80,11 +72,12 @@ public struct HistoryMainView: View {
     private func resetOnPanelOpen() {
         searchText = ""
         selectedFilter = .all
-        shouldResetSelectionOnNextSnapshot = false
-        if let currentId = selectedItemId, storage.items.contains(where: { $0.id == currentId }) {
-            // Preserve the user's previously selected item across panel toggles
-        } else {
-            selectedItemId = storage.items.first?.id
+        shouldResetSelectionOnNextSnapshot = true
+        selectedItemId = storage.items.first?.id
+        if let firstId = storage.items.first?.id {
+            DispatchQueue.main.async {
+                scrollCommand = ScrollCommand(id: firstId, count: (scrollCommand?.count ?? 0) &+ 1)
+            }
         }
     }
 
@@ -109,54 +102,37 @@ public struct HistoryMainView: View {
                 .opacity(0.18)
             
             VStack(spacing: 0) {
-                // 1. Body: Full-width Header over Split View (sidebar scrolls underneath with blur effect)
-                ZStack(alignment: .top) {
-                    // Split View Layer (Sidebar + Detail Inspector, matching Settings layout)
-                    HStack(spacing: 0) {
-                        // Left Column (Sidebar)
-                        leftListView
-                            .frame(width: 320)
-                            .background(Color(nsColor: .controlBackgroundColor).opacity(0.35))
-                        
-                        Divider()
-                            .opacity(0.3)
-                        
-                        // Right Column (Detail Inspector)
-                        rightPreviewView
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .padding(.top, headerHeight)
-                    }
-                    .frame(maxHeight: .infinity)
+                // 1. Full-width Header Titlebar with native material blur
+                headerView
+                    .background(
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .overlay(Color(nsColor: .windowBackgroundColor).opacity(0.4))
+                    )
+                
+                Divider()
+                    .opacity(0.35)
+                
+                // 2. Split View Layer (Sidebar + Detail Inspector)
+                HStack(spacing: 0) {
+                    // Left Column (Sidebar)
+                    leftListView
+                        .frame(width: 320)
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.35))
                     
-                    // Full-width Header Titlebar with native material blur
-                    VStack(spacing: 0) {
-                        headerView
-                            .background(
-                                Rectangle()
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(Color(nsColor: .windowBackgroundColor).opacity(0.4))
-                            )
-                            .background(
-                                GeometryReader { geo in
-                                    Color.clear.preference(key: HeaderHeightPreferenceKey.self, value: geo.size.height)
-                                }
-                            )
-                        
-                        Divider()
-                            .opacity(0.35)
-                    }
+                    Divider()
+                        .opacity(0.3)
+                    
+                    // Right Column (Detail Inspector)
+                    rightPreviewView
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .frame(maxHeight: .infinity)
-                .onPreferenceChange(HeaderHeightPreferenceKey.self) { newHeight in
-                    if newHeight > 0 {
-                        headerHeight = newHeight
-                    }
-                }
                 
                 Divider()
                     .opacity(0.3)
                 
-                // 2. Footer: Action Bar
+                // 3. Footer: Action Bar
                 ActionFooterView(
                     itemCount: filteredItems.count,
                     lang: settings.appLanguage,
@@ -220,7 +196,16 @@ public struct HistoryMainView: View {
                     scrollCommand = ScrollCommand(id: firstId, count: (scrollCommand?.count ?? 0) &+ 1)
                 }
             } else if let id = selectedItemId, !newItems.contains(where: { $0.id == id }) {
-                selectedItemId = newItems.first?.id
+                if let oldIndex = itemIndexMap[id] {
+                    let nextIndex = min(oldIndex, max(0, newItems.count - 1))
+                    let candidateId = newItems.indices.contains(nextIndex) ? newItems[nextIndex].id : newItems.first?.id
+                    selectedItemId = candidateId
+                    if let candidateId {
+                        scrollCommand = ScrollCommand(id: candidateId, count: (scrollCommand?.count ?? 0) &+ 1)
+                    }
+                } else {
+                    selectedItemId = newItems.first?.id
+                }
             } else if selectedItemId == nil {
                 selectedItemId = newItems.first?.id
             }
@@ -346,10 +331,6 @@ public struct HistoryMainView: View {
         ScrollViewReader { proxy in
             ScrollView(.vertical, showsIndicators: true) {
                 LazyVStack(spacing: 2) {
-                    // Spacer so content starts below full-width header, but scrolls underneath with blur
-                    Color.clear
-                        .frame(height: headerHeight)
-                    
                     if let error = storage.lastError ?? pasteService.lastError {
                         HStack {
                             Text(error).font(.caption).foregroundStyle(.orange)
@@ -369,7 +350,11 @@ public struct HistoryMainView: View {
                             Text(L10n.statusItemDeleted(lang: settings.appLanguage))
                             Button(L10n.actionUndo(lang: settings.appLanguage)) { storage.undoDelete() }
                             Spacer()
-                        }.font(.caption).padding(.horizontal, 12).padding(.vertical, 4)
+                        }
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .transition(.opacity)
                     }
 
                     if filteredItems.isEmpty {
@@ -417,10 +402,10 @@ public struct HistoryMainView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
                 .padding(.horizontal, 8)
                 .thinScrollbar()
             }
+            .contentMargins(.vertical, 8, for: .scrollContent)
             .frame(maxWidth: .infinity)
             .thinScrollbar()
             .onChange(of: scrollCommand) { _, command in

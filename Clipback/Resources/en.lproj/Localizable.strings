@@ -211,3 +211,31 @@
 "error.paste.itemUnavailable" = "The item is unavailable. Your clipboard was not changed.";
 "error.paste.clipboardChanged" = "Clipboard changed while preparing the item. Try again.";
 "error.paste.writeFailed" = "Could not write to the clipboard.";
+"error.paste.cancelledFocusChanged" = "Paste cancelled because the target application lost focus.";
+
+/* Hotkey Warnings */
+"warning.hotkey.defaultUnavailable" = "Default shortcut is unavailable. Choose another combination in Settings.";
+"warning.hotkey.registrationFailed" = "Failed to register shortcut. It may be in use by another application.";
+
+/* HUD & Status */
+"action.dismiss" = "Dismiss";
+"status.recordingPaused" = "Clipboard recording is paused";
+"status.itemDeleted" = "Item deleted.";
+"action.undo" = "Undo";
+"accessibility.clearSearch" = "Clear search";
+
+/* Preview Actions & Labels */
+"preview.showFullText" = "Show Full Text";
+"preview.fullTextNotice" = "Large text truncated for performance.";
+"preview.openFullImage" = "Open Full Image";
+"preview.recognizingOcr" = "Recognizing text in image…";
+"preview.recognitionFailed" = "Text recognition failed.";
+
+/* Content Types */
+"contentType.text" = "Text";
+"contentType.richText" = "Rich Text";
+"contentType.image" = "Image";
+"contentType.color" = "Color";
+"contentType.link" = "Link";
+"contentType.file" = "File";
+

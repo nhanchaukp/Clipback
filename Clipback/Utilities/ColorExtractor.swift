@@ -6,22 +6,19 @@ public struct ColorExtractor {
     
     /// Regular expression matching standard HEX color strings (#RGB, #RRGGBB, #RRGGBBAA)
     private static let hexRegex = try? NSRegularExpression(
-        pattern: "^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$",
+        pattern: "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$",
         options: []
     )
     
     /// Validates and extracts a clean HEX color string from text
     public static func extractHexColor(from text: String) -> String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("#") else { return nil }
         guard let regex = hexRegex else { return nil }
         let range = NSRange(location: 0, length: trimmed.utf16.count)
         guard regex.firstMatch(in: trimmed, options: [], range: range) != nil else { return nil }
         
-        if trimmed.hasPrefix("#") {
-            return trimmed.uppercased()
-        } else {
-            return "#\(trimmed.uppercased())"
-        }
+        return trimmed.uppercased()
     }
     
     /// Converts a HEX string into NSColor
