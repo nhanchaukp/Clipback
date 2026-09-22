@@ -12,7 +12,12 @@ public struct DetailPreviewView: View {
     @State private var isOCRCopiedFlash: Bool = false
     @State private var jsonFormatResult: JSONFormatter.FormatResult? = nil
     @State private var isPrettyMode: Bool = true
-    @State private var isURLToggled: Bool = false
+    private enum URLDisplayMode {
+        case original
+        case encoded
+        case decoded
+    }
+    @State private var urlMode: URLDisplayMode = .original
     @State private var isActionCopied: Bool = false
     
     public init(item: ClipboardItem?, lang: AppLanguage = .english) {
@@ -86,7 +91,7 @@ public struct DetailPreviewView: View {
         showFullText = false
         textStatistics = nil
         isPrettyMode = true
-        isURLToggled = false
+        urlMode = .original
         isActionCopied = false
         
         let text = item?.textContent ?? ""
@@ -216,37 +221,60 @@ public struct DetailPreviewView: View {
             } else if item.isURL || item.contentType == .link,
                       let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines),
                       !urlStr.isEmpty {
-                // Link: Open in Browser + Decode/Encode Toggle + Copy Link
+                // Link: Open in Browser + Encode + Decode + Copy Link
                 actionButton(
                     title: L10n.openInBrowser(lang: lang),
                     icon: "arrow.up.right.square"
                 ) {
-                    if let url = URL(string: urlStr) ?? URL(string: urlEncoded(urlStr)) {
+                    let openTarget = urlDecoded(urlStr)
+                    if let url = URL(string: urlStr) ?? URL(string: openTarget) {
                         NSWorkspace.shared.open(url)
                     }
                 }
                 
-                // Decode / Encode Utility Button
+                // Encode Button
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) {
-                        isURLToggled.toggle()
+                        urlMode = (urlMode == .encoded) ? .original : .encoded
                     }
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "percent")
                             .font(.system(size: 10, weight: .semibold))
                             .frame(width: 14, height: 14)
-                        Text(urlToggleLabel(for: urlStr))
+                        Text(L10n.urlEncode(lang: lang))
                             .font(.caption2.weight(.medium))
                     }
-                    .foregroundColor(isURLToggled ? .accentColor : .secondary)
+                    .foregroundColor(urlMode == .encoded ? .accentColor : .secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(isURLToggled ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.06))
+                    .background(urlMode == .encoded ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.06))
                     .cornerRadius(5)
                 }
                 .buttonStyle(.plain)
                 
+                // Decode Button
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        urlMode = (urlMode == .decoded) ? .original : .decoded
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "textformat")
+                            .font(.system(size: 10, weight: .semibold))
+                            .frame(width: 14, height: 14)
+                        Text(L10n.urlDecode(lang: lang))
+                            .font(.caption2.weight(.medium))
+                    }
+                    .foregroundColor(urlMode == .decoded ? .accentColor : .secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(urlMode == .decoded ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.06))
+                    .cornerRadius(5)
+                }
+                .buttonStyle(.plain)
+                
+                // Copy Link
                 actionButton(
                     title: L10n.actionCopy(lang: lang),
                     icon: "doc.on.doc",
@@ -740,34 +768,25 @@ public struct DetailPreviewView: View {
     
     // MARK: - URL Transform Helpers
     
-    private func isOriginallyEncoded(_ text: String) -> Bool {
-        return text.contains("%") && (text.removingPercentEncoding != text)
-    }
-    
     private func transformedURL(for original: String) -> String {
-        let isEncoded = isOriginallyEncoded(original)
-        if isEncoded {
-            return isURLToggled ? (original.removingPercentEncoding ?? original) : original
-        } else {
-            return isURLToggled ? urlEncoded(original) : original
-        }
-    }
-    
-    private func urlToggleLabel(for original: String) -> String {
-        let isEncoded = isOriginallyEncoded(original)
-        if isEncoded {
-            return isURLToggled ? L10n.urlEncode(lang: lang) : L10n.urlDecode(lang: lang)
-        } else {
-            return isURLToggled ? L10n.urlDecode(lang: lang) : L10n.urlEncode(lang: lang)
+        switch urlMode {
+        case .original:
+            return original
+        case .encoded:
+            return urlEncoded(original)
+        case .decoded:
+            return urlDecoded(original)
         }
     }
     
     private func urlEncoded(_ text: String) -> String {
-        let allowed = CharacterSet.urlQueryAllowed
-            .union(CharacterSet.urlPathAllowed)
-            .union(CharacterSet.urlHostAllowed)
-            .union(CharacterSet(charactersIn: "#[]"))
+        // RFC 3986 percent-encoding (equivalent to JavaScript encodeURIComponent)
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_.~"))
         return text.addingPercentEncoding(withAllowedCharacters: allowed) ?? text
+    }
+    
+    private func urlDecoded(_ text: String) -> String {
+        return text.removingPercentEncoding ?? text
     }
     
     // 5. File System URLs
