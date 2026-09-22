@@ -144,6 +144,8 @@ public struct DetailPreviewView: View {
                         .foregroundColor(.secondary)
                 }
                 
+                Spacer()
+                
                 // If JSON is detected, show Pretty / Raw toggle + Copy Formatted button
                 if let jsonResult = jsonFormatResult {
                     HStack(spacing: 6) {
@@ -192,12 +194,6 @@ public struct DetailPreviewView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                
-                Spacer()
-                
-                Text(textStatistics.map { L10n.textStats(chars: $0.characters, words: $0.words, lang: lang) } ?? "…")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
             }
             
             if let jsonResult = jsonFormatResult, isPrettyMode {
@@ -634,6 +630,20 @@ public struct DetailPreviewView: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
+            }
+            
+            // Text specifications (Characters & Words) in footer
+            if (item.contentType == .text || item.contentType == .richText),
+               let stats = textStatistics {
+                if item.sourceAppName != nil {
+                    Text("•")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.5))
+                }
+                
+                Text(L10n.textStats(chars: stats.characters, words: stats.words, lang: lang))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
             
             // Image specifications (Dimensions & File Size) in footer
