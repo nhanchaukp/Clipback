@@ -84,16 +84,9 @@ public struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         switch contentType {
         case .text, .richText:
             let trimmed = (textContent ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            if JSONFormatter.isPotentialJSON(trimmed) {
-                let singleLine = trimmed
-                    .components(separatedBy: .newlines)
-                    .map { $0.trimmingCharacters(in: .whitespaces) }
-                    .filter { !$0.isEmpty }
-                    .joined(separator: " ")
-                return String(singleLine.prefix(240))
-            }
-            let firstLine = trimmed.prefix(240).split(whereSeparator: { $0.isNewline }).first
-            return firstLine.map(String.init) ?? "Empty Text"
+            guard !trimmed.isEmpty else { return "Empty Text" }
+            let inlined = trimmed.filter { !$0.isNewline }
+            return String(inlined.prefix(240))
         case .image:
             if let w = imageWidth, let h = imageHeight {
                 return "Image (\(Int(w)) × \(Int(h)))"
@@ -102,7 +95,8 @@ public struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         case .colorHex:
             return colorHex ?? "Color Code"
         case .link:
-            return textContent ?? "Web Link"
+            let trimmed = (textContent ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? "Web Link" : String(trimmed.filter { !$0.isNewline }.prefix(240))
         case .file:
             if let firstFile = filePaths?.first {
                 let name = URL(fileURLWithPath: firstFile).lastPathComponent
