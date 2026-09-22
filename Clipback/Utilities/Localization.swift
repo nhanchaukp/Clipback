@@ -154,6 +154,11 @@ nonisolated public struct L10n {
     public static func qrImageCopied(lang: AppLanguage) -> String { tr("detail.qrImageCopied", lang: lang) }
     public static func copyQrText(lang: AppLanguage) -> String { tr("detail.copyQrText", lang: lang) }
     public static func openQrLink(lang: AppLanguage) -> String { tr("detail.openQrLink", lang: lang) }
+    public static func jsonBadge(lang: AppLanguage) -> String { tr("detail.jsonBadge", lang: lang) }
+    public static func jsonPretty(lang: AppLanguage) -> String { tr("detail.jsonPretty", lang: lang) }
+    public static func jsonRaw(lang: AppLanguage) -> String { tr("detail.jsonRaw", lang: lang) }
+    public static func jsonCopyFormatted(lang: AppLanguage) -> String { tr("detail.jsonCopyFormatted", lang: lang) }
+    public static func jsonCopied(lang: AppLanguage) -> String { tr("detail.jsonCopied", lang: lang) }
 
     // MARK: - Settings Window Tabs
     public static func settingsTitle(lang: AppLanguage) -> String { tr("settings.title", lang: lang) }

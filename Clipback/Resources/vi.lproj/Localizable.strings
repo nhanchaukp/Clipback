@@ -43,6 +43,11 @@
 "detail.qrImageCopied" = "Đã chép ảnh QR!";
 "detail.copyQrText" = "Sao chép mã";
 "detail.openQrLink" = "Mở liên kết QR";
+"detail.jsonBadge" = "JSON";
+"detail.jsonPretty" = "Định dạng";
+"detail.jsonRaw" = "Dạng gốc";
+"detail.jsonCopyFormatted" = "Chép JSON đẹp";
+"detail.jsonCopied" = "Đã chép!";
 
 /* Settings Window Tabs */
 "settings.title" = "Clipback — Cài đặt";

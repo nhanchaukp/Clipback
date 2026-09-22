@@ -10,6 +10,9 @@ public struct DetailPreviewView: View {
     @State private var textStatistics: (characters: Int, words: Int)?
     @State private var isQRCopiedFlash: Bool = false
     @State private var isOCRCopiedFlash: Bool = false
+    @State private var jsonFormatResult: JSONFormatter.FormatResult? = nil
+    @State private var isPrettyMode: Bool = true
+    @State private var isJSONCopiedFlash: Bool = false
     
     public init(item: ClipboardItem?, lang: AppLanguage = .english) {
         self.item = item
@@ -56,7 +59,25 @@ public struct DetailPreviewView: View {
         .task(id: item?.id) {
             showFullText = false
             textStatistics = nil
+            jsonFormatResult = nil
+            isPrettyMode = true
+            isJSONCopiedFlash = false
+            
             let text = item?.textContent ?? ""
+            guard !text.isEmpty else { return }
+            
+            // Asynchronously detect and format JSON in background
+            if JSONFormatter.isPotentialJSON(text) {
+                let jsonTask = Task.detached(priority: .userInitiated) { () -> JSONFormatter.FormatResult? in
+                    if Task.isCancelled { return nil }
+                    return JSONFormatter.formatAndHighlight(text)
+                }
+                if let formatted = await jsonTask.value, !Task.isCancelled {
+                    jsonFormatResult = formatted
+                }
+            }
+            
+            // Asynchronously calculate word and character statistics in background
             let calculation = Task.detached(priority: .utility) {
                 var words = 0
                 var insideWord = false
@@ -103,10 +124,74 @@ public struct DetailPreviewView: View {
     // 1. Plain & Rich Text Preview
     private func textPreview(_ item: ClipboardItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(L10n.textTypeLabel(lang: lang), systemImage: "doc.text")
-                    .font(.caption.bold())
-                    .foregroundColor(.secondary)
+            HStack(spacing: 8) {
+                if jsonFormatResult != nil {
+                    // JSON Badge
+                    HStack(spacing: 4) {
+                        Image(systemName: "curlybraces")
+                            .font(.system(size: 10, weight: .bold))
+                        Text(L10n.jsonBadge(lang: lang))
+                            .font(.caption.bold())
+                    }
+                    .foregroundColor(.purple)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.purple.opacity(0.12))
+                    .cornerRadius(5)
+                } else {
+                    Label(L10n.textTypeLabel(lang: lang), systemImage: "doc.text")
+                        .font(.caption.bold())
+                        .foregroundColor(.secondary)
+                }
+                
+                // If JSON is detected, show Pretty / Raw toggle + Copy Formatted button
+                if let jsonResult = jsonFormatResult {
+                    HStack(spacing: 6) {
+                        // Toggle Pretty / Raw
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                isPrettyMode.toggle()
+                            }
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: isPrettyMode ? "text.alignleft" : "curlybraces")
+                                    .font(.system(size: 10))
+                                Text(isPrettyMode ? L10n.jsonRaw(lang: lang) : L10n.jsonPretty(lang: lang))
+                                    .font(.caption2.bold())
+                            }
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.primary.opacity(0.06))
+                            .cornerRadius(4)
+                        }
+                        .buttonStyle(.plain)
+                        
+                        // Copy Formatted JSON
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(jsonResult.prettyString, forType: .string)
+                            isJSONCopiedFlash = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                                isJSONCopiedFlash = false
+                            }
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: isJSONCopiedFlash ? "checkmark.circle.fill" : "doc.on.doc")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundColor(isJSONCopiedFlash ? .green : .secondary)
+                                Text(isJSONCopiedFlash ? L10n.jsonCopied(lang: lang) : L10n.jsonCopyFormatted(lang: lang))
+                                    .font(.caption2)
+                                    .foregroundColor(isJSONCopiedFlash ? .green : .secondary)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.primary.opacity(0.06))
+                            .cornerRadius(4)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
                 
                 Spacer()
                 
@@ -115,15 +200,22 @@ public struct DetailPreviewView: View {
                     .foregroundColor(.secondary)
             }
             
-            Text(showFullText ? (item.textContent ?? "") : String((item.textContent ?? "").prefix(12_000)))
-                .font(.system(size: 13, design: .monospaced))
-                .foregroundColor(.primary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if !showFullText, (item.textContent?.utf8.count ?? 0) > 12_000 {
-                Button(L10n.previewShowFullText(lang: lang)) { showFullText = true }
-                Text(L10n.previewFullTextNotice(lang: lang))
-                    .font(.callout).foregroundStyle(.secondary)
+            if let jsonResult = jsonFormatResult, isPrettyMode {
+                Text(jsonResult.attributed)
+                    .font(.system(size: 13, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Text(showFullText ? (item.textContent ?? "") : String((item.textContent ?? "").prefix(12_000)))
+                    .font(.system(size: 13, design: .monospaced))
+                    .foregroundColor(.primary)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if !showFullText, (item.textContent?.utf8.count ?? 0) > 12_000 {
+                    Button(L10n.previewShowFullText(lang: lang)) { showFullText = true }
+                    Text(L10n.previewFullTextNotice(lang: lang))
+                        .font(.callout).foregroundStyle(.secondary)
+                }
             }
         }
     }

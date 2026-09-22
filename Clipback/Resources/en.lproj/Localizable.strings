@@ -43,6 +43,11 @@
 "detail.qrImageCopied" = "QR Image Copied!";
 "detail.copyQrText" = "Copy QR Text";
 "detail.openQrLink" = "Open QR Link";
+"detail.jsonBadge" = "JSON";
+"detail.jsonPretty" = "Pretty";
+"detail.jsonRaw" = "Raw";
+"detail.jsonCopyFormatted" = "Copy Formatted";
+"detail.jsonCopied" = "Copied!";
 
 /* Settings Window Tabs */
 "settings.title" = "Clipback — Settings";
