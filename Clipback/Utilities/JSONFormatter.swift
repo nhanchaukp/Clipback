@@ -16,7 +16,10 @@ nonisolated public enum JSONFormatter {
     
     /// Fast heuristic check whether text could be a JSON object or array
     public static func isPotentialJSON(_ text: String) -> Bool {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        var trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasSuffix(";") {
+            trimmed = String(trimmed.dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
         return (trimmed.hasPrefix("{") && trimmed.hasSuffix("}")) ||
                (trimmed.hasPrefix("[") && trimmed.hasSuffix("]"))
     }
@@ -25,7 +28,12 @@ nonisolated public enum JSONFormatter {
     public static func formatAndHighlight(_ raw: String, maxChars: Int = 100_000) -> FormatResult? {
         guard isPotentialJSON(raw) else { return nil }
         guard raw.utf8.count <= maxChars else { return nil }
-        guard let data = raw.data(using: .utf8) else { return nil }
+        
+        var trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasSuffix(";") {
+            trimmed = String(trimmed.dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        guard let data = trimmed.data(using: .utf8) else { return nil }
         
         guard let obj = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
               let prettyData = try? JSONSerialization.data(

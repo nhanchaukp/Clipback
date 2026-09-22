@@ -54,27 +54,12 @@ public struct DetailPreviewView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.25))
         .task(id: item?.id) {
-            showFullText = false
-            textStatistics = nil
-            jsonFormatResult = nil
-            isPrettyMode = true
-            isActionCopied = false
+            updateItemState(for: item)
             
             let text = item?.textContent ?? ""
             guard !text.isEmpty else { return }
             
-            // Asynchronously detect and format JSON in background
-            if JSONFormatter.isPotentialJSON(text) {
-                let jsonTask = Task.detached(priority: .userInitiated) { () -> JSONFormatter.FormatResult? in
-                    if Task.isCancelled { return nil }
-                    return JSONFormatter.formatAndHighlight(text)
-                }
-                if let formatted = await jsonTask.value, !Task.isCancelled {
-                    jsonFormatResult = formatted
-                }
-            }
-            
-            // Asynchronously calculate word and character statistics in background
+            // Asynchronously calculate exact word and character statistics in background
             let calculation = Task.detached(priority: .utility) {
                 var words = 0
                 var insideWord = false
@@ -96,6 +81,20 @@ public struct DetailPreviewView: View {
         }
     }
     
+    private func updateItemState(for item: ClipboardItem?) {
+        showFullText = false
+        textStatistics = nil
+        isPrettyMode = true
+        isActionCopied = false
+        
+        let text = item?.textContent ?? ""
+        if !text.isEmpty && JSONFormatter.isPotentialJSON(text) {
+            jsonFormatResult = JSONFormatter.formatAndHighlight(text)
+        } else {
+            jsonFormatResult = nil
+        }
+    }
+    
     // MARK: - Footer Section (Actions & Metadata)
     
     private func footerSection(for item: ClipboardItem) -> some View {
@@ -106,14 +105,56 @@ public struct DetailPreviewView: View {
                 .padding(.vertical, 8)
             
             Divider()
-                .opacity(0.2)
+                .opacity(0.3)
             
-            // Row 2 & 3: Metadata (Type Badge + Word/Char stats, App + Timestamp)
-            metadataFooter(for: item)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.primary.opacity(0.02))
+            // Row 2: Metadata Line 1 - Content Type (left) <Spacer> Word/Char Count (right)
+            HStack(spacing: 8) {
+                contentTypeLabel(for: item)
+                
+                Spacer()
+                
+                if let stats = contentStats(for: item) {
+                    Text(stats)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 7)
+            
+            Divider()
+                .opacity(0.3)
+            
+            // Row 3: Metadata Line 2 - Source App (left) <Spacer> Timestamp (right)
+            HStack(spacing: 8) {
+                if let appName = item.sourceAppName {
+                    HStack(spacing: 4) {
+                        if let bundleId = item.sourceAppBundleId,
+                           let icon = SourceAppIconCache.shared.icon(for: bundleId) {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 13, height: 13)
+                        }
+                        Text(appName)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 10))
+                    Text(formattedDate(item.timestamp))
+                        .font(.caption2)
+                }
+                .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 7)
         }
+        .background(Color.primary.opacity(0.02))
     }
     
     // MARK: - Action Toolbar
@@ -313,99 +354,48 @@ public struct DetailPreviewView: View {
         }
     }
     
-    // MARK: - Metadata Footer
-    
-    private func metadataFooter(for item: ClipboardItem) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // Line 1: Content Type Badge + Word/Character count (or dimensions / files count)
-            HStack(spacing: 8) {
-                contentTypeBadge(for: item)
-                
-                if let stats = contentStats(for: item) {
-                    Text("•")
-                        .font(.caption2)
-                        .foregroundColor(.secondary.opacity(0.4))
-                    Text(stats)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-            }
-            
-            // Line 2: Source App + Timestamp
-            HStack(spacing: 8) {
-                if let appName = item.sourceAppName {
-                    HStack(spacing: 4) {
-                        if let bundleId = item.sourceAppBundleId,
-                           let icon = SourceAppIconCache.shared.icon(for: bundleId) {
-                            Image(nsImage: icon)
-                                .resizable()
-                                .frame(width: 13, height: 13)
-                        }
-                        Text(appName)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Spacer()
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                        .font(.system(size: 10))
-                    Text(formattedDate(item.timestamp))
-                        .font(.caption2)
-                }
-                .foregroundColor(.secondary)
-            }
-        }
-    }
+    // MARK: - Content Type Label (Icon + Text without badge background)
     
     @ViewBuilder
-    private func contentTypeBadge(for item: ClipboardItem) -> some View {
+    private func contentTypeLabel(for item: ClipboardItem) -> some View {
         if jsonFormatResult != nil {
-            badgeView(title: L10n.jsonBadge(lang: lang), icon: "curlybraces", color: .purple)
+            typeLabel(title: L10n.jsonBadge(lang: lang), icon: "curlybraces", color: .purple)
         } else if item.isEmail {
-            badgeView(title: L10n.emailBadge(lang: lang), icon: "envelope.fill", color: .blue)
+            typeLabel(title: L10n.emailBadge(lang: lang), icon: "envelope.fill", color: .blue)
         } else if item.isURL {
-            badgeView(title: L10n.contentTypeLink(lang: lang), icon: "link", color: .blue)
+            typeLabel(title: L10n.contentTypeLink(lang: lang), icon: "link", color: .blue)
         } else {
             switch item.contentType {
             case .text, .richText:
-                badgeView(title: L10n.textTypeLabel(lang: lang), icon: "doc.text", color: .secondary)
+                typeLabel(title: L10n.textTypeLabel(lang: lang), icon: "doc.text", color: .secondary)
             case .image:
-                badgeView(title: L10n.contentTypeImage(lang: lang), icon: "photo", color: .teal)
+                typeLabel(title: L10n.contentTypeImage(lang: lang), icon: "photo", color: .teal)
             case .colorHex:
-                badgeView(title: L10n.contentTypeColor(lang: lang), icon: "paintpalette.fill", color: .pink)
+                typeLabel(title: L10n.contentTypeColor(lang: lang), icon: "paintpalette.fill", color: .pink)
             case .link:
-                badgeView(title: L10n.contentTypeLink(lang: lang), icon: "link", color: .blue)
+                typeLabel(title: L10n.contentTypeLink(lang: lang), icon: "link", color: .blue)
             case .file:
-                badgeView(title: L10n.contentTypeFile(lang: lang), icon: "folder.fill", color: .orange)
+                typeLabel(title: L10n.contentTypeFile(lang: lang), icon: "folder.fill", color: .orange)
             }
         }
     }
     
-    private func badgeView(title: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 4) {
+    private func typeLabel(title: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 5) {
             Image(systemName: icon)
-                .font(.system(size: 9, weight: .bold))
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(color)
             Text(title)
-                .font(.system(size: 10, weight: .bold))
+                .font(.caption2.weight(.medium))
+                .foregroundColor(.secondary)
         }
-        .foregroundColor(color)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(color.opacity(0.12))
-        .cornerRadius(4)
     }
     
     private func contentStats(for item: ClipboardItem) -> String? {
         if item.contentType == .text || item.contentType == .richText {
-            if let stats = textStatistics {
-                return L10n.textStats(chars: stats.characters, words: stats.words, lang: lang)
-            }
-            return nil
+            let chars = textStatistics?.characters ?? item.characterCount
+            let words = textStatistics?.words ?? item.wordCount
+            return L10n.textStats(chars: chars, words: words, lang: lang)
         } else if item.contentType == .image, let w = item.imageWidth, let h = item.imageHeight {
             var parts = ["\(Int(w)) × \(Int(h))"]
             if let size = item.imageFileSize {
