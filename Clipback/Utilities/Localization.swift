@@ -164,6 +164,8 @@ nonisolated public struct L10n {
     public static func openFile(lang: AppLanguage) -> String { tr("detail.openFile", lang: lang) }
     public static func copyPath(lang: AppLanguage) -> String { tr("detail.copyPath", lang: lang) }
     public static func emailBadge(lang: AppLanguage) -> String { tr("detail.badgeEmail", lang: lang) }
+    public static func urlDecode(lang: AppLanguage) -> String { tr("detail.urlDecode", lang: lang) }
+    public static func urlEncode(lang: AppLanguage) -> String { tr("detail.urlEncode", lang: lang) }
 
     // MARK: - Settings Window Tabs
     public static func settingsTitle(lang: AppLanguage) -> String { tr("settings.title", lang: lang) }

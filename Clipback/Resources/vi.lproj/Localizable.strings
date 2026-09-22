@@ -53,6 +53,8 @@
 "detail.openFile" = "Mở tệp";
 "detail.copyPath" = "Chép đường dẫn";
 "detail.badgeEmail" = "Email";
+"detail.urlDecode" = "Giải mã";
+"detail.urlEncode" = "Mã hóa";
 
 /* Settings Window Tabs */
 "settings.title" = "Clipback — Cài đặt";

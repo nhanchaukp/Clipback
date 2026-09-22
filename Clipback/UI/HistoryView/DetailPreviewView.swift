@@ -12,6 +12,7 @@ public struct DetailPreviewView: View {
     @State private var isOCRCopiedFlash: Bool = false
     @State private var jsonFormatResult: JSONFormatter.FormatResult? = nil
     @State private var isPrettyMode: Bool = true
+    @State private var isURLToggled: Bool = false
     @State private var isActionCopied: Bool = false
     
     public init(item: ClipboardItem?, lang: AppLanguage = .english) {
@@ -85,6 +86,7 @@ public struct DetailPreviewView: View {
         showFullText = false
         textStatistics = nil
         isPrettyMode = true
+        isURLToggled = false
         isActionCopied = false
         
         let text = item?.textContent ?? ""
@@ -211,21 +213,46 @@ public struct DetailPreviewView: View {
                 ) {
                     copyText(email)
                 }
-            } else if item.isURL, let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines), let url = URL(string: urlStr) {
-                // Link: Open in Browser + Copy Link
+            } else if item.isURL || item.contentType == .link,
+                      let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      !urlStr.isEmpty {
+                // Link: Open in Browser + Decode/Encode Toggle + Copy Link
                 actionButton(
                     title: L10n.openInBrowser(lang: lang),
                     icon: "arrow.up.right.square"
                 ) {
-                    NSWorkspace.shared.open(url)
+                    if let url = URL(string: urlStr) ?? URL(string: urlEncoded(urlStr)) {
+                        NSWorkspace.shared.open(url)
+                    }
                 }
+                
+                // Decode / Encode Utility Button
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isURLToggled.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "percent")
+                            .font(.system(size: 10, weight: .semibold))
+                            .frame(width: 14, height: 14)
+                        Text(urlToggleLabel(for: urlStr))
+                            .font(.caption2.weight(.medium))
+                    }
+                    .foregroundColor(isURLToggled ? .accentColor : .secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(isURLToggled ? Color.accentColor.opacity(0.12) : Color.primary.opacity(0.06))
+                    .cornerRadius(5)
+                }
+                .buttonStyle(.plain)
                 
                 actionButton(
                     title: L10n.actionCopy(lang: lang),
                     icon: "doc.on.doc",
                     isSuccess: isActionCopied
                 ) {
-                    copyText(urlStr)
+                    copyText(transformedURL(for: urlStr))
                 }
             } else if item.contentType == .image, let fileName = item.imageFileName {
                 // Image: Open Full Image + Copy Image
@@ -699,13 +726,48 @@ public struct DetailPreviewView: View {
     
     // 4. Web URLs
     private func linkPreview(_ item: ClipboardItem) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(item.textContent ?? "")
+        let original = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let displayed = transformedURL(for: original)
+        
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(displayed)
                 .font(.system(size: 13))
                 .foregroundColor(.primary)
                 .underline(true, color: .secondary.opacity(0.4))
                 .textSelection(.enabled)
         }
+    }
+    
+    // MARK: - URL Transform Helpers
+    
+    private func isOriginallyEncoded(_ text: String) -> Bool {
+        return text.contains("%") && (text.removingPercentEncoding != text)
+    }
+    
+    private func transformedURL(for original: String) -> String {
+        let isEncoded = isOriginallyEncoded(original)
+        if isEncoded {
+            return isURLToggled ? (original.removingPercentEncoding ?? original) : original
+        } else {
+            return isURLToggled ? urlEncoded(original) : original
+        }
+    }
+    
+    private func urlToggleLabel(for original: String) -> String {
+        let isEncoded = isOriginallyEncoded(original)
+        if isEncoded {
+            return isURLToggled ? L10n.urlEncode(lang: lang) : L10n.urlDecode(lang: lang)
+        } else {
+            return isURLToggled ? L10n.urlDecode(lang: lang) : L10n.urlEncode(lang: lang)
+        }
+    }
+    
+    private func urlEncoded(_ text: String) -> String {
+        let allowed = CharacterSet.urlQueryAllowed
+            .union(CharacterSet.urlPathAllowed)
+            .union(CharacterSet.urlHostAllowed)
+            .union(CharacterSet(charactersIn: "#[]"))
+        return text.addingPercentEncoding(withAllowedCharacters: allowed) ?? text
     }
     
     // 5. File System URLs

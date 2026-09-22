@@ -53,6 +53,8 @@
 "detail.openFile" = "Open File";
 "detail.copyPath" = "Copy Path";
 "detail.badgeEmail" = "Email";
+"detail.urlDecode" = "Decode";
+"detail.urlEncode" = "Encode";
 
 /* Settings Window Tabs */
 "settings.title" = "Clipback — Settings";
