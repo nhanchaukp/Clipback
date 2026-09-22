@@ -48,6 +48,11 @@
 "detail.jsonRaw" = "Dạng gốc";
 "detail.jsonCopyFormatted" = "Chép JSON đẹp";
 "detail.jsonCopied" = "Đã chép!";
+"detail.sendEmail" = "Gửi Email";
+"detail.showInFinder" = "Hiện trong Finder";
+"detail.openFile" = "Mở tệp";
+"detail.copyPath" = "Chép đường dẫn";
+"detail.badgeEmail" = "Email";
 
 /* Settings Window Tabs */
 "settings.title" = "Clipback — Cài đặt";

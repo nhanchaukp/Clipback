@@ -48,6 +48,11 @@
 "detail.jsonRaw" = "Raw";
 "detail.jsonCopyFormatted" = "Copy Formatted";
 "detail.jsonCopied" = "Copied!";
+"detail.sendEmail" = "Send Email";
+"detail.showInFinder" = "Show in Finder";
+"detail.openFile" = "Open File";
+"detail.copyPath" = "Copy Path";
+"detail.badgeEmail" = "Email";
 
 /* Settings Window Tabs */
 "settings.title" = "Clipback — Settings";

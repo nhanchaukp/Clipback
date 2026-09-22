@@ -159,6 +159,11 @@ nonisolated public struct L10n {
     public static func jsonRaw(lang: AppLanguage) -> String { tr("detail.jsonRaw", lang: lang) }
     public static func jsonCopyFormatted(lang: AppLanguage) -> String { tr("detail.jsonCopyFormatted", lang: lang) }
     public static func jsonCopied(lang: AppLanguage) -> String { tr("detail.jsonCopied", lang: lang) }
+    public static func sendEmail(lang: AppLanguage) -> String { tr("detail.sendEmail", lang: lang) }
+    public static func showInFinder(lang: AppLanguage) -> String { tr("detail.showInFinder", lang: lang) }
+    public static func openFile(lang: AppLanguage) -> String { tr("detail.openFile", lang: lang) }
+    public static func copyPath(lang: AppLanguage) -> String { tr("detail.copyPath", lang: lang) }
+    public static func emailBadge(lang: AppLanguage) -> String { tr("detail.badgeEmail", lang: lang) }
 
     // MARK: - Settings Window Tabs
     public static func settingsTitle(lang: AppLanguage) -> String { tr("settings.title", lang: lang) }

@@ -149,4 +149,25 @@ public struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         }
         return false
     }
+    
+    /// Checks whether the item contains a valid email address
+    public var detectedEmail: String? {
+        guard let text = textContent?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !text.isEmpty,
+              !text.contains(" "),
+              !text.contains("\n") else {
+            return nil
+        }
+        let cleaned = text.lowercased().hasPrefix("mailto:") ? String(text.dropFirst(7)) : text
+        let emailPattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        if cleaned.range(of: emailPattern, options: .regularExpression) != nil {
+            return cleaned
+        }
+        return nil
+    }
+    
+    /// Checks whether the item is an email address
+    public var isEmail: Bool {
+        detectedEmail != nil
+    }
 }

@@ -12,7 +12,7 @@ public struct DetailPreviewView: View {
     @State private var isOCRCopiedFlash: Bool = false
     @State private var jsonFormatResult: JSONFormatter.FormatResult? = nil
     @State private var isPrettyMode: Bool = true
-    @State private var isJSONCopied: Bool = false
+    @State private var isActionCopied: Bool = false
     
     public init(item: ClipboardItem?, lang: AppLanguage = .english) {
         self.item = item
@@ -34,7 +34,7 @@ public struct DetailPreviewView: View {
                 .frame(maxHeight: .infinity)
                 .thinScrollbar()
                 
-                // Sticky Detection Cards (QR, OCR, Link QR) - 100% full width, pinned above metadata footer
+                // Sticky Detection Cards (QR, OCR, Link QR) - 100% full width, pinned above footer
                 if hasDetectionCards(for: item) {
                     Divider()
                         .opacity(0.3)
@@ -45,11 +45,8 @@ public struct DetailPreviewView: View {
                 Divider()
                     .opacity(0.3)
                 
-                // Metadata footer card (Source application, precise timestamp, dimensions)
-                metadataFooter(for: item)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color.primary.opacity(0.02))
+                // Pinned Footer Section: Action Controls + Metadata
+                footerSection(for: item)
             } else {
                 emptyState
             }
@@ -61,7 +58,7 @@ public struct DetailPreviewView: View {
             textStatistics = nil
             jsonFormatResult = nil
             isPrettyMode = true
-            isJSONCopied = false
+            isActionCopied = false
             
             let text = item?.textContent ?? ""
             guard !text.isEmpty else { return }
@@ -99,6 +96,328 @@ public struct DetailPreviewView: View {
         }
     }
     
+    // MARK: - Footer Section (Actions & Metadata)
+    
+    private func footerSection(for item: ClipboardItem) -> some View {
+        VStack(spacing: 0) {
+            // Row 1: Action Controls (Copy, Pretty/Raw, Open in Browser, Send Email, etc.)
+            actionToolbar(for: item)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            
+            Divider()
+                .opacity(0.2)
+            
+            // Row 2 & 3: Metadata (Type Badge + Word/Char stats, App + Timestamp)
+            metadataFooter(for: item)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.primary.opacity(0.02))
+        }
+    }
+    
+    // MARK: - Action Toolbar
+    
+    @ViewBuilder
+    private func actionToolbar(for item: ClipboardItem) -> some View {
+        HStack(spacing: 8) {
+            if let jsonResult = jsonFormatResult {
+                // JSON: Pretty / Raw Toggle
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isPrettyMode.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: isPrettyMode ? "text.alignleft" : "curlybraces")
+                            .font(.system(size: 10, weight: .semibold))
+                            .frame(width: 14, height: 14)
+                        Text(isPrettyMode ? L10n.jsonRaw(lang: lang) : L10n.jsonPretty(lang: lang))
+                            .font(.caption2.weight(.medium))
+                    }
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.primary.opacity(0.06))
+                    .cornerRadius(5)
+                }
+                .buttonStyle(.plain)
+                
+                // JSON: Copy
+                actionButton(
+                    title: L10n.actionCopy(lang: lang),
+                    icon: "doc.on.doc",
+                    isSuccess: isActionCopied
+                ) {
+                    let textToCopy = isPrettyMode ? jsonResult.prettyString : (item.textContent ?? "")
+                    copyText(textToCopy)
+                }
+            } else if let email = item.detectedEmail {
+                // Email: Send Email + Copy
+                actionButton(
+                    title: L10n.sendEmail(lang: lang),
+                    icon: "envelope.fill"
+                ) {
+                    if let url = URL(string: "mailto:\(email)") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                
+                actionButton(
+                    title: L10n.actionCopy(lang: lang),
+                    icon: "doc.on.doc",
+                    isSuccess: isActionCopied
+                ) {
+                    copyText(email)
+                }
+            } else if item.isURL, let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines), let url = URL(string: urlStr) {
+                // Link: Open in Browser + Copy Link
+                actionButton(
+                    title: L10n.openInBrowser(lang: lang),
+                    icon: "arrow.up.right.square"
+                ) {
+                    NSWorkspace.shared.open(url)
+                }
+                
+                actionButton(
+                    title: L10n.actionCopy(lang: lang),
+                    icon: "doc.on.doc",
+                    isSuccess: isActionCopied
+                ) {
+                    copyText(urlStr)
+                }
+            } else if item.contentType == .image, let fileName = item.imageFileName {
+                // Image: Open Full Image + Copy Image
+                actionButton(
+                    title: L10n.previewOpenFullImage(lang: lang),
+                    icon: "arrow.up.right.square"
+                ) {
+                    if let url = ImageCacheManager.shared.url(for: fileName) {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                
+                actionButton(
+                    title: L10n.actionCopy(lang: lang),
+                    icon: "doc.on.doc",
+                    isSuccess: isActionCopied
+                ) {
+                    if let url = ImageCacheManager.shared.url(for: fileName),
+                       let data = try? Data(contentsOf: url) {
+                        NSPasteboard.general.clearContents()
+                        let entry = NSPasteboardItem()
+                        entry.setData(data, forType: .png)
+                        entry.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
+                        NSPasteboard.general.writeObjects([entry])
+                        triggerCopyFeedback()
+                    }
+                }
+            } else if item.contentType == .file, let paths = item.filePaths, !paths.isEmpty {
+                // File: Show in Finder + Open + Copy Path
+                actionButton(
+                    title: L10n.showInFinder(lang: lang),
+                    icon: "folder"
+                ) {
+                    if let first = paths.first {
+                        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: first)])
+                    }
+                }
+                
+                actionButton(
+                    title: L10n.openFile(lang: lang),
+                    icon: "arrow.up.right.square"
+                ) {
+                    if let first = paths.first {
+                        NSWorkspace.shared.open(URL(fileURLWithPath: first))
+                    }
+                }
+                
+                actionButton(
+                    title: L10n.copyPath(lang: lang),
+                    icon: "doc.on.doc",
+                    isSuccess: isActionCopied
+                ) {
+                    copyText(paths.joined(separator: "\n"))
+                }
+            } else if item.contentType == .colorHex, let hex = item.colorHex {
+                // Color: Copy HEX + Copy RGB
+                actionButton(
+                    title: "HEX",
+                    icon: "doc.on.doc",
+                    isSuccess: isActionCopied
+                ) {
+                    copyText(hex)
+                }
+                
+                if let rgb = ColorExtractor.rgbString(from: hex) {
+                    actionButton(
+                        title: "RGB",
+                        icon: "doc.on.doc"
+                    ) {
+                        copyText(rgb)
+                    }
+                }
+            } else if let text = item.textContent, !text.isEmpty {
+                // Default Text: Copy
+                actionButton(
+                    title: L10n.actionCopy(lang: lang),
+                    icon: "doc.on.doc",
+                    isSuccess: isActionCopied
+                ) {
+                    copyText(text)
+                }
+            }
+            
+            Spacer()
+        }
+    }
+    
+    private func actionButton(
+        title: String,
+        icon: String,
+        isSuccess: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Image(systemName: isSuccess ? "checkmark" : icon)
+                    .font(.system(size: 10, weight: .semibold))
+                    .frame(width: 14, height: 14)
+                    .foregroundColor(isSuccess ? .green : .secondary)
+                Text(title)
+                    .font(.caption2.weight(.medium))
+                    .foregroundColor(isSuccess ? .green : .secondary)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.primary.opacity(0.06))
+            .cornerRadius(5)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func copyText(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
+        triggerCopyFeedback()
+    }
+    
+    private func triggerCopyFeedback() {
+        if UserSettings.shared.playSounds {
+            SoundEffectManager.playSound(named: UserSettings.shared.soundName)
+        }
+        isActionCopied = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            isActionCopied = false
+        }
+    }
+    
+    // MARK: - Metadata Footer
+    
+    private func metadataFooter(for item: ClipboardItem) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Line 1: Content Type Badge + Word/Character count (or dimensions / files count)
+            HStack(spacing: 8) {
+                contentTypeBadge(for: item)
+                
+                if let stats = contentStats(for: item) {
+                    Text("•")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.4))
+                    Text(stats)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            
+            // Line 2: Source App + Timestamp
+            HStack(spacing: 8) {
+                if let appName = item.sourceAppName {
+                    HStack(spacing: 4) {
+                        if let bundleId = item.sourceAppBundleId,
+                           let icon = SourceAppIconCache.shared.icon(for: bundleId) {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 13, height: 13)
+                        }
+                        Text(appName)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 10))
+                    Text(formattedDate(item.timestamp))
+                        .font(.caption2)
+                }
+                .foregroundColor(.secondary)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func contentTypeBadge(for item: ClipboardItem) -> some View {
+        if jsonFormatResult != nil {
+            badgeView(title: L10n.jsonBadge(lang: lang), icon: "curlybraces", color: .purple)
+        } else if item.isEmail {
+            badgeView(title: L10n.emailBadge(lang: lang), icon: "envelope.fill", color: .blue)
+        } else if item.isURL {
+            badgeView(title: L10n.contentTypeLink(lang: lang), icon: "link", color: .blue)
+        } else {
+            switch item.contentType {
+            case .text, .richText:
+                badgeView(title: L10n.textTypeLabel(lang: lang), icon: "doc.text", color: .secondary)
+            case .image:
+                badgeView(title: L10n.contentTypeImage(lang: lang), icon: "photo", color: .teal)
+            case .colorHex:
+                badgeView(title: L10n.contentTypeColor(lang: lang), icon: "paintpalette.fill", color: .pink)
+            case .link:
+                badgeView(title: L10n.contentTypeLink(lang: lang), icon: "link", color: .blue)
+            case .file:
+                badgeView(title: L10n.contentTypeFile(lang: lang), icon: "folder.fill", color: .orange)
+            }
+        }
+    }
+    
+    private func badgeView(title: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 9, weight: .bold))
+            Text(title)
+                .font(.system(size: 10, weight: .bold))
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(color.opacity(0.12))
+        .cornerRadius(4)
+    }
+    
+    private func contentStats(for item: ClipboardItem) -> String? {
+        if item.contentType == .text || item.contentType == .richText {
+            if let stats = textStatistics {
+                return L10n.textStats(chars: stats.characters, words: stats.words, lang: lang)
+            }
+            return nil
+        } else if item.contentType == .image, let w = item.imageWidth, let h = item.imageHeight {
+            var parts = ["\(Int(w)) × \(Int(h))"]
+            if let size = item.imageFileSize {
+                parts.append(ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file))
+            }
+            return parts.joined(separator: " • ")
+        } else if item.contentType == .file, let paths = item.filePaths {
+            return "\(paths.count) \(L10n.systemFiles(lang: lang).lowercased())"
+        }
+        return nil
+    }
+    
     // MARK: - Content Previews by Type
     
     @ViewBuilder
@@ -124,82 +443,6 @@ public struct DetailPreviewView: View {
     // 1. Plain & Rich Text Preview
     private func textPreview(_ item: ClipboardItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                if jsonFormatResult != nil {
-                    // JSON Badge
-                    HStack(spacing: 4) {
-                        Image(systemName: "curlybraces")
-                            .font(.system(size: 10, weight: .bold))
-                        Text(L10n.jsonBadge(lang: lang))
-                            .font(.caption.bold())
-                    }
-                    .foregroundColor(.purple)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.purple.opacity(0.12))
-                    .cornerRadius(5)
-                } else {
-                    Label(L10n.textTypeLabel(lang: lang), systemImage: "doc.text")
-                        .font(.caption.bold())
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // If JSON is detected, show Pretty / Raw toggle + Copy Formatted button
-                if let jsonResult = jsonFormatResult {
-                    HStack(spacing: 6) {
-                        // Toggle Pretty / Raw
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                isPrettyMode.toggle()
-                            }
-                        } label: {
-                            HStack(spacing: 3) {
-                                Image(systemName: isPrettyMode ? "text.alignleft" : "curlybraces")
-                                    .font(.system(size: 10))
-                                Text(isPrettyMode ? L10n.jsonRaw(lang: lang) : L10n.jsonPretty(lang: lang))
-                                    .font(.caption2.bold())
-                            }
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.primary.opacity(0.06))
-                            .cornerRadius(4)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        // Copy active mode content
-                        Button {
-                            let textToCopy = isPrettyMode ? jsonResult.prettyString : (item.textContent ?? "")
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(textToCopy, forType: .string)
-                            NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
-                            if UserSettings.shared.playSounds { SoundEffectManager.playSound(named: UserSettings.shared.soundName) }
-                            isJSONCopied = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                                isJSONCopied = false
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: isJSONCopied ? "checkmark" : "doc.on.doc")
-                                    .font(.system(size: 10, weight: .semibold))
-                                    .frame(width: 14, height: 14)
-                                    .foregroundColor(isJSONCopied ? .green : .secondary)
-                                Text(L10n.actionCopy(lang: lang))
-                                    .font(.caption2)
-                                    .foregroundColor(isJSONCopied ? .green : .secondary)
-                            }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.primary.opacity(0.06))
-                            .cornerRadius(4)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            
             if let jsonResult = jsonFormatResult, isPrettyMode {
                 Text(jsonResult.attributed)
                     .font(.system(size: 13, design: .monospaced))
@@ -228,9 +471,6 @@ public struct DetailPreviewView: View {
                     .frame(maxHeight: 220)
                     .cornerRadius(8)
                     .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
-                Button(L10n.previewOpenFullImage(lang: lang)) {
-                    if let url = ImageCacheManager.shared.url(for: fileName) { NSWorkspace.shared.open(url) }
-                }
             }
             if item.ocrStatus == "pending" {
                 HStack { ProgressView().controlSize(.small); Text(L10n.previewRecognizingOcr(lang: lang)) }
@@ -256,21 +496,6 @@ public struct DetailPreviewView: View {
                 
                 Spacer()
                 
-                // Open URL icon button (if link) without label
-                if let url = URL(string: qr), (url.scheme == "http" || url.scheme == "https") {
-                    Button {
-                        NSWorkspace.shared.open(url)
-                    } label: {
-                        Image(systemName: "arrow.up.right.square")
-                            .font(.system(size: 11))
-                            .frame(width: 14, height: 14, alignment: .center)
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .frame(width: 22, height: 22, alignment: .center)
-                    .help(L10n.openQrLink(lang: lang))
-                }
-                
                 // Copy QR text icon button without label
                 Button {
                     NSPasteboard.general.clearContents()
@@ -289,34 +514,30 @@ public struct DetailPreviewView: View {
                 .buttonStyle(.plain)
                 .frame(width: 22, height: 22, alignment: .center)
                 .help(L10n.copyQrText(lang: lang))
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 10)
-            
-            if qr.count > 160 || qr.contains("\n") {
-                ScrollView(.vertical, showsIndicators: true) {
-                    Text(qr)
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.primary)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 10)
-                        .thinScrollbar()
+                
+                // Open link button (only if QR content is a URL)
+                if let url = URL(string: qr), url.scheme == "http" || url.scheme == "https" {
+                    Button {
+                        NSWorkspace.shared.open(url)
+                    } label: {
+                        Image(systemName: "arrow.up.right.square")
+                            .font(.system(size: 11))
+                            .frame(width: 14, height: 14, alignment: .center)
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 22, height: 22, alignment: .center)
+                    .help(L10n.openQrLink(lang: lang))
                 }
-                .frame(maxWidth: .infinity)
-                .frame(maxHeight: 90)
-                .thinScrollbar()
-            } else {
-                Text(qr)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(.primary)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 10)
             }
+            
+            Text(qr)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundColor(.primary)
+                .lineLimit(2)
+                .textSelection(.enabled)
         }
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
@@ -353,33 +574,73 @@ public struct DetailPreviewView: View {
                 .frame(width: 22, height: 22, alignment: .center)
                 .help(L10n.actionCopy(lang: lang))
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 10)
             
-            if ocr.count > 160 || ocr.contains("\n") {
-                ScrollView(.vertical, showsIndicators: true) {
-                    Text(ocr)
-                        .font(.system(size: 11))
-                        .foregroundColor(.primary)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 10)
-                        .thinScrollbar()
-                }
-                .frame(maxWidth: .infinity)
-                .frame(maxHeight: 110)
-                .thinScrollbar()
-            } else {
-                Text(ocr)
-                    .font(.system(size: 11))
-                    .foregroundColor(.primary)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 10)
-            }
+            Text(ocr)
+                .font(.system(size: 11))
+                .foregroundColor(.primary)
+                .lineLimit(3)
+                .textSelection(.enabled)
         }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    // Generated QR Code Card for Web Links
+    private func generatedQRCard(qrImage: NSImage) -> some View {
+        HStack(spacing: 12) {
+            Image(nsImage: qrImage)
+                .interpolation(.none)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 68, height: 68)
+                .background(Color.white)
+                .cornerRadius(6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(Color.black.opacity(0.1), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.08), radius: 3, y: 1)
+            
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.blue)
+                    
+                    Text(L10n.qrGenerateTab(lang: lang))
+                        .font(.caption.bold())
+                        .foregroundColor(.primary)
+                }
+                
+                Text(L10n.qrGenerateTip(lang: lang))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.writeObjects([qrImage])
+                    NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
+                    isQRCopiedFlash = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        isQRCopiedFlash = false
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: isQRCopiedFlash ? "checkmark.circle.fill" : "doc.on.doc")
+                            .font(.system(size: 10))
+                        Text(isQRCopiedFlash ? L10n.qrImageCopied(lang: lang) : L10n.copyQrImage(lang: lang))
+                            .font(.caption2)
+                    }
+                    .foregroundColor(isQRCopiedFlash ? .green : .secondary)
+                }
+                .buttonStyle(.borderless)
+                .padding(.top, 2)
+            }
+            
+            Spacer()
+        }
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
@@ -426,6 +687,7 @@ public struct DetailPreviewView: View {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(value, forType: .string)
                 NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
+                triggerCopyFeedback()
             } label: {
                 Image(systemName: "doc.on.doc")
                     .font(.caption)
@@ -445,42 +707,20 @@ public struct DetailPreviewView: View {
         )
     }
     
-    // 4. Web URLs & Generated QR Code
+    // 4. Web URLs
     private func linkPreview(_ item: ClipboardItem) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(L10n.webLink(lang: lang), systemImage: "link")
-                .font(.caption.bold())
-                .foregroundColor(.secondary)
-            
             Text(item.textContent ?? "")
                 .font(.system(size: 13))
                 .foregroundColor(.primary)
                 .underline(true, color: .secondary.opacity(0.4))
                 .textSelection(.enabled)
-            
-            if let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines),
-               let url = URL(string: urlStr) {
-                HStack(spacing: 8) {
-                    Button {
-                        NSWorkspace.shared.open(url)
-                    } label: {
-                        Label(L10n.openInBrowser(lang: lang), systemImage: "arrow.up.right.square")
-                            .font(.caption.bold())
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-            }
         }
     }
     
     // 5. File System URLs
     private func filePreview(_ item: ClipboardItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label(L10n.systemFiles(lang: lang), systemImage: "folder")
-                .font(.caption.bold())
-                .foregroundColor(.secondary)
-            
             if let paths = item.filePaths {
                 ForEach(paths, id: \.self) { path in
                     HStack {
@@ -561,129 +801,6 @@ public struct DetailPreviewView: View {
             
         default:
             EmptyView()
-        }
-    }
-    
-    private func generatedQRCard(qrImage: NSImage) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(nsImage: qrImage)
-                .resizable()
-                .interpolation(.none)
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 72, height: 72)
-                .padding(4)
-                .background(Color.white)
-                .cornerRadius(6)
-                .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
-            
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 4) {
-                    Image(systemName: "qrcode")
-                        .font(.caption.bold())
-                        .foregroundColor(.secondary)
-                    Text(L10n.qrGenerateTab(lang: lang))
-                        .font(.caption.bold())
-                        .foregroundColor(.secondary)
-                }
-                
-                Text(L10n.qrGenerateTip(lang: lang))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
-                
-                Button {
-                    QRCodeEngine.shared.copyQRCodeImageToPasteboard(qrImage)
-                    isQRCopiedFlash = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                        isQRCopiedFlash = false
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: isQRCopiedFlash ? "checkmark" : "doc.on.doc")
-                        Text(isQRCopiedFlash ? L10n.qrImageCopied(lang: lang) : L10n.copyQrImage(lang: lang))
-                    }
-                    .font(.caption2.bold())
-                    .foregroundColor(isQRCopiedFlash ? .green : .secondary)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    // 6. Metadata Footer Card
-    
-    private func metadataFooter(for item: ClipboardItem) -> some View {
-        HStack(spacing: 10) {
-            // Source Application
-            if let appName = item.sourceAppName {
-                HStack(spacing: 4) {
-                    if let bundleId = item.sourceAppBundleId,
-                       let icon = SourceAppIconCache.shared.icon(for: bundleId) {
-                        Image(nsImage: icon)
-                            .resizable()
-                            .frame(width: 14, height: 14)
-                    }
-                    Text(appName)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            // Text specifications (Characters & Words) in footer
-            if (item.contentType == .text || item.contentType == .richText),
-               let stats = textStatistics {
-                if item.sourceAppName != nil {
-                    Text("•")
-                        .font(.caption2)
-                        .foregroundColor(.secondary.opacity(0.5))
-                }
-                
-                Text(L10n.textStats(chars: stats.characters, words: stats.words, lang: lang))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            
-            // Image specifications (Dimensions & File Size) in footer
-            if item.contentType == .image, let w = item.imageWidth, let h = item.imageHeight {
-                if item.sourceAppName != nil {
-                    Text("•")
-                        .font(.caption2)
-                        .foregroundColor(.secondary.opacity(0.5))
-                }
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "aspectratio")
-                        .font(.system(size: 10))
-                    Text("\(Int(w)) × \(Int(h))")
-                        .font(.caption2)
-                }
-                .foregroundColor(.secondary)
-                
-                if let size = item.imageFileSize {
-                    Text("•")
-                        .font(.caption2)
-                        .foregroundColor(.secondary.opacity(0.5))
-                    
-                    Text(ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file))
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            Spacer()
-            
-            // Precise Timestamp
-            HStack(spacing: 4) {
-                Image(systemName: "clock")
-                    .font(.system(size: 10))
-                Text(formattedDate(item.timestamp))
-                    .font(.caption2)
-            }
-            .foregroundColor(.secondary)
         }
     }
     
