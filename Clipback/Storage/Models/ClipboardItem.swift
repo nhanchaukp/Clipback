@@ -127,15 +127,15 @@ public struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         return formatter.localizedString(for: timestamp, relativeTo: Date())
     }
     
-    /// Checks whether the item contains a valid HTTP/HTTPS URL
+    /// Checks whether the item contains a valid HTTP/HTTPS URL or URL-encoded HTTP string
     public var isURL: Bool {
         if contentType == .link { return true }
         guard let text = textContent?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !text.isEmpty,
-              !text.contains("\n") else {
+              !text.isEmpty else {
             return false
         }
-        if text.hasPrefix("http://") || text.hasPrefix("https://") {
+        let lower = text.lowercased()
+        if lower.hasPrefix("http") {
             return true
         }
         if let url = URL(string: text), let scheme = url.scheme?.lowercased(), (scheme == "http" || scheme == "https") {

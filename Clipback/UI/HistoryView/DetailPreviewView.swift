@@ -218,7 +218,7 @@ public struct DetailPreviewView: View {
                 ) {
                     copyText(email)
                 }
-            } else if item.isURL || item.contentType == .link,
+            } else if item.isURL || item.contentType == .link || (item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased().hasPrefix("http") ?? false),
                       let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines),
                       !urlStr.isEmpty {
                 // Link: Open in Browser + Encode + Decode + Copy Link
@@ -227,7 +227,7 @@ public struct DetailPreviewView: View {
                     icon: "arrow.up.right.square"
                 ) {
                     let openTarget = urlDecoded(urlStr)
-                    if let url = URL(string: urlStr) ?? URL(string: openTarget) {
+                    if let url = URL(string: openTarget) ?? URL(string: urlStr) {
                         NSWorkspace.shared.open(url)
                     }
                 }
@@ -829,7 +829,7 @@ public struct DetailPreviewView: View {
             return hasQR || hasOCR
         case .link, .text, .richText:
             if item.isURL, let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines),
-               URL(string: urlStr) != nil {
+               (URL(string: urlStr) != nil || URL(string: urlDecoded(urlStr)) != nil) {
                 return true
             }
             return false
@@ -863,11 +863,13 @@ public struct DetailPreviewView: View {
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.35))
             
         case .link, .text, .richText:
-            if let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines),
-               let qrImage = QRCodeEngine.shared.generateQRCode(from: urlStr, size: 120) {
-                generatedQRCard(qrImage: qrImage)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.35))
+            if let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines) {
+                let qrTarget = urlDecoded(urlStr)
+                if let qrImage = QRCodeEngine.shared.generateQRCode(from: qrTarget, size: 120) ?? QRCodeEngine.shared.generateQRCode(from: urlStr, size: 120) {
+                    generatedQRCard(qrImage: qrImage)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.35))
+                }
             }
             
         default:
