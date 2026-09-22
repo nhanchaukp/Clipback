@@ -18,6 +18,7 @@ public struct DetailPreviewView: View {
         case decoded
     }
     @State private var urlMode: URLDisplayMode = .original
+    @State private var isQRHovered: Bool = false
     @State private var isActionCopied: Bool = false
     
     public init(item: ClipboardItem?, lang: AppLanguage = .english) {
@@ -92,6 +93,7 @@ public struct DetailPreviewView: View {
         textStatistics = nil
         isPrettyMode = true
         urlMode = .original
+        isQRHovered = false
         isActionCopied = false
         
         let text = item?.textContent ?? ""
@@ -639,12 +641,23 @@ public struct DetailPreviewView: View {
                 .scaledToFit()
                 .frame(width: 68, height: 68)
                 .background(Color.white)
-                .cornerRadius(6)
+                .cornerRadius(isQRHovered ? 8 : 6)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .strokeBorder(Color.black.opacity(0.1), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: isQRHovered ? 8 : 6)
+                        .strokeBorder(Color.black.opacity(isQRHovered ? 0.2 : 0.1), lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.08), radius: 3, y: 1)
+                .shadow(
+                    color: .black.opacity(isQRHovered ? 0.35 : 0.08),
+                    radius: isQRHovered ? 14 : 3,
+                    x: 0,
+                    y: isQRHovered ? 6 : 1
+                )
+                .scaleEffect(isQRHovered ? 2.3 : 1.0, anchor: .bottomLeading)
+                .zIndex(isQRHovered ? 100 : 1)
+                .animation(.spring(response: 0.26, dampingFraction: 0.72), value: isQRHovered)
+                .onHover { hovering in
+                    isQRHovered = hovering
+                }
             
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
@@ -865,10 +878,11 @@ public struct DetailPreviewView: View {
         case .link, .text, .richText:
             if let urlStr = item.textContent?.trimmingCharacters(in: .whitespacesAndNewlines) {
                 let qrTarget = urlDecoded(urlStr)
-                if let qrImage = QRCodeEngine.shared.generateQRCode(from: qrTarget, size: 120) ?? QRCodeEngine.shared.generateQRCode(from: urlStr, size: 120) {
+                if let qrImage = QRCodeEngine.shared.generateQRCode(from: qrTarget, size: 240) ?? QRCodeEngine.shared.generateQRCode(from: urlStr, size: 240) {
                     generatedQRCard(qrImage: qrImage)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color(nsColor: .controlBackgroundColor).opacity(0.35))
+                        .zIndex(isQRHovered ? 50 : 0)
                 }
             }
             
