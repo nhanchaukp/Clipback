@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Ultra-lightweight, zero-dependency JSON detector, pretty-formatter, and syntax highlighter
-public enum JSONFormatter {
+nonisolated public enum JSONFormatter {
     
     public struct FormatResult: Sendable {
         public let prettyString: String
