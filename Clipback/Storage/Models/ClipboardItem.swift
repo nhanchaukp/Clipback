@@ -84,6 +84,14 @@ public struct ClipboardItem: Identifiable, Codable, Hashable, Sendable {
         switch contentType {
         case .text, .richText:
             let trimmed = (textContent ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if JSONFormatter.isPotentialJSON(trimmed) {
+                let singleLine = trimmed
+                    .components(separatedBy: .newlines)
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                    .filter { !$0.isEmpty }
+                    .joined(separator: " ")
+                return String(singleLine.prefix(240))
+            }
             let firstLine = trimmed.prefix(240).split(whereSeparator: { $0.isNewline }).first
             return firstLine.map(String.init) ?? "Empty Text"
         case .image:

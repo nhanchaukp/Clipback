@@ -12,7 +12,6 @@ public struct DetailPreviewView: View {
     @State private var isOCRCopiedFlash: Bool = false
     @State private var jsonFormatResult: JSONFormatter.FormatResult? = nil
     @State private var isPrettyMode: Bool = true
-    @State private var isJSONCopiedFlash: Bool = false
     
     public init(item: ClipboardItem?, lang: AppLanguage = .english) {
         self.item = item
@@ -61,7 +60,6 @@ public struct DetailPreviewView: View {
             textStatistics = nil
             jsonFormatResult = nil
             isPrettyMode = true
-            isJSONCopiedFlash = false
             
             let text = item?.textContent ?? ""
             guard !text.isEmpty else { return }
@@ -169,23 +167,22 @@ public struct DetailPreviewView: View {
                         }
                         .buttonStyle(.plain)
                         
-                        // Copy Formatted JSON
+                        // Copy active mode content
                         Button {
+                            let textToCopy = isPrettyMode ? jsonResult.prettyString : (item.textContent ?? "")
                             NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(jsonResult.prettyString, forType: .string)
-                            isJSONCopiedFlash = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-                                isJSONCopiedFlash = false
-                            }
+                            NSPasteboard.general.setString(textToCopy, forType: .string)
+                            NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
+                            StorageManager.shared.touchItem(item)
+                            if UserSettings.shared.playSounds { SoundEffectManager.playSound(named: UserSettings.shared.soundName) }
                         } label: {
                             HStack(spacing: 3) {
-                                Image(systemName: isJSONCopiedFlash ? "checkmark.circle.fill" : "doc.on.doc")
+                                Image(systemName: "doc.on.doc")
                                     .font(.system(size: 10, weight: .semibold))
-                                    .foregroundColor(isJSONCopiedFlash ? .green : .secondary)
-                                Text(isJSONCopiedFlash ? L10n.jsonCopied(lang: lang) : L10n.jsonCopyFormatted(lang: lang))
+                                Text(L10n.actionCopy(lang: lang))
                                     .font(.caption2)
-                                    .foregroundColor(isJSONCopiedFlash ? .green : .secondary)
                             }
+                            .foregroundColor(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Color.primary.opacity(0.06))
