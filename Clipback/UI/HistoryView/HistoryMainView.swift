@@ -238,7 +238,7 @@ public struct HistoryMainView: View {
                     .font(.system(size: 14))
                     .focused($isSearchFocused)
                 
-                if searchModel.isSearching {
+                if searchModel.isSearching && !searchText.isEmpty {
                     ProgressView().controlSize(.small)
                 }
                 

@@ -12,6 +12,7 @@ public struct DetailPreviewView: View {
     @State private var isOCRCopiedFlash: Bool = false
     @State private var jsonFormatResult: JSONFormatter.FormatResult? = nil
     @State private var isPrettyMode: Bool = true
+    @State private var isJSONCopied: Bool = false
     
     public init(item: ClipboardItem?, lang: AppLanguage = .english) {
         self.item = item
@@ -60,6 +61,7 @@ public struct DetailPreviewView: View {
             textStatistics = nil
             jsonFormatResult = nil
             isPrettyMode = true
+            isJSONCopied = false
             
             let text = item?.textContent ?? ""
             guard !text.isEmpty else { return }
@@ -173,16 +175,21 @@ public struct DetailPreviewView: View {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.setString(textToCopy, forType: .string)
                             NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
-                            StorageManager.shared.touchItem(item)
                             if UserSettings.shared.playSounds { SoundEffectManager.playSound(named: UserSettings.shared.soundName) }
+                            isJSONCopied = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                                isJSONCopied = false
+                            }
                         } label: {
-                            HStack(spacing: 3) {
-                                Image(systemName: "doc.on.doc")
+                            HStack(spacing: 4) {
+                                Image(systemName: isJSONCopied ? "checkmark" : "doc.on.doc")
                                     .font(.system(size: 10, weight: .semibold))
+                                    .frame(width: 14, height: 14)
+                                    .foregroundColor(isJSONCopied ? .green : .secondary)
                                 Text(L10n.actionCopy(lang: lang))
                                     .font(.caption2)
+                                    .foregroundColor(isJSONCopied ? .green : .secondary)
                             }
-                            .foregroundColor(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Color.primary.opacity(0.06))
@@ -269,7 +276,6 @@ public struct DetailPreviewView: View {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(qr, forType: .string)
                     NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
-                    if let item = item { StorageManager.shared.touchItem(item) }
                     isQRCopiedFlash = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                         isQRCopiedFlash = false
@@ -333,7 +339,6 @@ public struct DetailPreviewView: View {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(ocr, forType: .string)
                     NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
-                    if let item = item { StorageManager.shared.touchItem(item) }
                     isOCRCopiedFlash = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                         isOCRCopiedFlash = false
@@ -421,7 +426,6 @@ public struct DetailPreviewView: View {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(value, forType: .string)
                 NSPasteboard.general.setData(Data([1]), forType: ClipboardMonitor.ownContentType)
-                if let item = item { StorageManager.shared.touchItem(item) }
             } label: {
                 Image(systemName: "doc.on.doc")
                     .font(.caption)
