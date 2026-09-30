@@ -40,9 +40,12 @@ public final class PanelController: NSObject, NSWindowDelegate {
         
         centerPanelOnActiveScreen(panel)
         
+        // Post didShow BEFORE makeKeyAndOrderFront so that views synchronously reset their
+        // selection, search query, and scroll state before the window renders on screen.
+        NotificationCenter.default.post(name: Self.didShow, object: panel)
+        
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        NotificationCenter.default.post(name: Self.didShow, object: panel)
     }
     
     /// Hides the floating panel

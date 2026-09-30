@@ -9,6 +9,7 @@ public struct HistoryMainView: View {
     
     @StateObject private var searchModel = HistorySearchModel()
     @ObservedObject private var pasteService = PasteService.shared
+    @State private var panelSessionId: Int = 0
     @State private var panelVisible = false
     @State private var searchText: String = ""
     @State private var selectedFilter: ContentFilter = .all
@@ -75,9 +76,7 @@ public struct HistoryMainView: View {
         shouldResetSelectionOnNextSnapshot = true
         selectedItemId = storage.items.first?.id
         if let firstId = storage.items.first?.id {
-            DispatchQueue.main.async {
-                scrollCommand = ScrollCommand(id: firstId, count: (scrollCommand?.count ?? 0) &+ 1)
-            }
+            scrollCommand = ScrollCommand(id: firstId, count: (scrollCommand?.count ?? 0) &+ 1)
         }
     }
 
@@ -154,6 +153,7 @@ public struct HistoryMainView: View {
                 .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
         )
         .onAppear {
+            panelSessionId &+= 1
             panelVisible = true
             isSearchFocused = true
             isAccessibilityGranted = AccessibilityManager.shared.isAccessibilityGranted
@@ -167,6 +167,7 @@ public struct HistoryMainView: View {
             keyCoordinator.stop()
         }
         .onReceive(NotificationCenter.default.publisher(for: PanelController.didShow)) { _ in
+            panelSessionId &+= 1
             panelVisible = true
             isSearchFocused = true
             isAccessibilityGranted = AccessibilityManager.shared.isAccessibilityGranted
@@ -178,6 +179,7 @@ public struct HistoryMainView: View {
         .onReceive(NotificationCenter.default.publisher(for: PanelController.didHide)) { _ in
             panelVisible = false
             keyCoordinator.stop()
+            resetOnPanelOpen()
         }
         .onChange(of: storage.revision) { _, _ in refreshSearch() }
         .onChange(of: selectedFilter) { _, _ in
@@ -416,6 +418,7 @@ public struct HistoryMainView: View {
                 }
             }
         }
+        .id(panelSessionId)
     }
     
     // MARK: - Right Detail Preview
