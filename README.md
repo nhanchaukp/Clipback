@@ -12,7 +12,7 @@
   <a href="https://github.com/nhanchaukp/clipback"><img src="https://img.shields.io/badge/platform-macOS%2014.6%2B-blue.svg?style=flat-square&logo=apple" alt="Platform: macOS 14.6+" /></a>
   <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5.9%20%7C%206.0-F05138.svg?style=flat-square&logo=swift&logoColor=white" alt="Swift 5.9 | 6.0" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License: MIT" /></a>
-  <a href="https://github.com/nhanchaukp/clipback/releases"><img src="https://img.shields.io/badge/release-v1.0.0-orange.svg?style=flat-square" alt="Release" /></a>
+  <a href="https://github.com/nhanchaukp/clipback/releases"><img src="https://img.shields.io/badge/release-v1.0.6-orange.svg?style=flat-square" alt="Release" /></a>
   <img src="https://img.shields.io/badge/architecture-Universal%20(Apple%20Silicon%20%2F%20Intel)-lightgrey.svg?style=flat-square" alt="Architecture: Universal" />
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome" />
 </p>
@@ -98,6 +98,13 @@
 ---
 
 ## 🛠️ Installation & Building
+
+### Install via Homebrew
+
+```bash
+brew tap nhanchaukp/tap
+brew install --cask clipback
+```
 
 ### Build from Source
 
