@@ -285,7 +285,8 @@ jobs:
           )
 
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "Release $RELEASE_TAG already exists. Uploading assets..."
+            echo "Release $RELEASE_TAG already exists. Updating notes and uploading assets..."
+            gh release edit "$RELEASE_TAG" --notes "$notes"
             gh release upload "$RELEASE_TAG" "${files_to_upload[@]}" --clobber
           else
             echo "Creating release $RELEASE_TAG..."
@@ -325,7 +326,7 @@ cask "clipback" do
   sha256 arm:   "${SHA_ARM64}",
          intel: "${SHA_INTEL}"
 
-  url "https://github.com/nhanchaukp/Clipback/releases/download/${RELEASE_TAG}/Clipback-#{arch}.dmg"
+  url "https://github.com/nhanchaukp/Clipback/releases/download/v#{version}/Clipback-#{arch}.dmg"
   name "Clipback"
   desc "Lightweight and powerful clipboard manager for macOS"
   homepage "https://github.com/nhanchaukp/Clipback"
